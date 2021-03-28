@@ -97,3 +97,23 @@ void tdmReadNode(uint32_t addr, struct node_t *node)
   }
 //  Serial.println();
 }
+
+void eepromRead(uint16_t addr, uint8_t *buf, uint16_t len)
+{
+  uint16_t eepAddr = addr;
+  uint8_t *ptr = buf;
+  for (uint16_t i = 0 ; i < len; i++)
+  {
+    *(ptr + i) = EEPROM.read(eepAddr + i);
+  }
+}
+
+void eepromUpdate(uint16_t addr, uint8_t *buf, uint16_t len)
+{
+  uint16_t eepAddr = addr;
+  uint8_t *ptr = buf;
+  for (uint16_t i = 0; i < len; i++)
+  {
+    EEPROM.update(eepAddr+i, *(ptr + i));
+  }
+}
