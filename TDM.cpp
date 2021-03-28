@@ -7,7 +7,7 @@
 */
 
 void printMomentVar();
-void printSlot(struct node_t *node);
+
 
 #define HOUR_SEC      3600UL
 #define DAY_TOTAL_SEC (24UL*HOUR_SEC)
