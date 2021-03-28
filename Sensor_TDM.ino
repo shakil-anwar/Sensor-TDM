@@ -5,6 +5,8 @@
 #define EEPROM_ADDR   0
 void tdmSaveNode(uint32_t addr, struct node_t *node);
 void tdmReadNode(uint32_t addr, struct node_t *node);
+void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len);
+void eepromRead(uint32_t addr, uint8_t *buf, uint16_t len);
 uint32_t nowUnix = 0;
 
 volatile uint32_t _second = nowUnix;
@@ -17,7 +19,7 @@ void setup()
   timer1.attachIntCompB(timerIsr);
   timer1.start();
   Serial.println(F("Setup Done"));
-  tdmBegin(EEPROM_ADDR, tdmReadNode, tdmSaveNode);
+  tdmBegin(EEPROM_ADDR, eepromRead, eepromUpdate);
   
 //  struct node_t nodeBuf;
 //  nodeBuf.deviceId  = 20;
@@ -98,20 +100,24 @@ void tdmReadNode(uint32_t addr, struct node_t *node)
 //  Serial.println();
 }
 
-void eepromRead(uint16_t addr, uint8_t *buf, uint16_t len)
+void eepromRead(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-  uint16_t eepAddr = addr;
+  
+  uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = buf;
+  Serial.print(F("EEPROM Reading Addr : ")); Serial.println(eepAddr);
   for (uint16_t i = 0 ; i < len; i++)
   {
     *(ptr + i) = EEPROM.read(eepAddr + i);
   }
 }
 
-void eepromUpdate(uint16_t addr, uint8_t *buf, uint16_t len)
+void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-  uint16_t eepAddr = addr;
+  
+  uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = buf;
+  Serial.print(F("EEPROM Update Addr : ")); Serial.println(eepAddr);
   for (uint16_t i = 0; i < len; i++)
   {
     EEPROM.update(eepAddr+i, *(ptr + i));

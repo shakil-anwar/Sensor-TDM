@@ -103,9 +103,10 @@ void tdmConfirmSlot(uint8_t slotNo)
     Serial.print(F("Confirming Slot : "));Serial.println(slotNo);
 //    printSlot(&tdm.node[slotNo]);
     tdm.node[slotNo].isAllotted = 1; //
-    _nodeWrite(_baseAddr,&tdm.node[slotNo]);
+    uint32_t memAddr = _baseAddr + slotNo*sizeof(struct node_t);
+    _nodeWrite(memAddr,(uint8_t*)&tdm.node[slotNo], sizeof(struct node_t));
     node_t nodeBuf;
-    _nodeRead(_baseAddr,&nodeBuf);
+    _nodeRead(memAddr,(uint8_t*)&nodeBuf,sizeof(struct node_t));
     printSlot(&nodeBuf);
     tdm.freeSlot++;
   }

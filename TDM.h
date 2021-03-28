@@ -15,10 +15,17 @@ struct node_t
   uint8_t reserve:3;
 };
 
+struct tdmMeta_t
+{
+  uint8_t freeSlotId;
+  uint8_t checksum;
+}
+
 struct tdm_t
 {
-  uint8_t freeSlot;
   struct node_t node[MAX_SENSOR_NODE];
+  uint8_t freeSlot;
+  uint8_t checksum;
 };
 
 struct slot_t
@@ -28,7 +35,8 @@ struct slot_t
   uint8_t slotNo;
 };
 
-typedef void (*tdmMemFun_t)(uint32_t,struct node_t*);
+typedef void (*tdmMemFun_t)(uint32_t,uint8_t*,uint16_t len);
+//void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len)
 
 void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite);
 void tdmUpdateSlot(uint32_t unixSec);
