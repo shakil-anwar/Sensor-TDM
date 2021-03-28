@@ -19,17 +19,17 @@ void setup()
   Serial.println(F("Setup Done"));
   tdmBegin(EEPROM_ADDR, tdmReadNode, tdmSaveNode);
   
-  struct node_t nodeBuf;
-  nodeBuf.deviceId  = 20;
-  nodeBuf.slotNo = 2;
-  nodeBuf.isAllotted = 1;
-  nodeBuf.losSlot = 0;
-  nodeBuf.reserve = 0;
-  tdmSaveNode(10, &nodeBuf);
-
-  struct node_t nodebuf2;
-  tdmReadNode(10, &nodebuf2);
-  printSlot(&nodebuf2);
+//  struct node_t nodeBuf;
+//  nodeBuf.deviceId  = 20;
+//  nodeBuf.slotNo = 2;
+//  nodeBuf.isAllotted = 1;
+//  nodeBuf.losSlot = 0;
+//  nodeBuf.reserve = 0;
+//  tdmSaveNode(10, &nodeBuf);
+//
+//  struct node_t nodebuf2;
+//  tdmReadNode(10, &nodebuf2);
+//  printSlot(&nodebuf2);
 }
 
 void loop()
@@ -73,14 +73,14 @@ void tdmSaveNode(uint32_t addr, struct node_t *node)
 {
   uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = (uint8_t*)node;
-  Serial.print(F("TDM EEPROM Saving Addr : ")); Serial.println(eepAddr);
-  Serial.println(sizeof(struct node_t));
+//  Serial.print(F("TDM EEPROM Saving Addr : ")); Serial.println(eepAddr);
+//  Serial.println(sizeof(struct node_t));
   for (uint8_t i = 0; i < sizeof(struct node_t); i++)
   {
     EEPROM.update(eepAddr+i, *(ptr + i));
-    Serial.print(*(ptr + i));Serial.print(F("  "));
+//    Serial.print(*(ptr + i));Serial.print(F("  "));
   }
-  Serial.println();
+//  Serial.println();
 
 }
 
@@ -88,12 +88,12 @@ void tdmReadNode(uint32_t addr, struct node_t *node)
 {
   uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = (uint8_t*)node;
-  Serial.print(F("TDM EEPROM Reading Addr : ")); Serial.println(eepAddr);
-  Serial.println(sizeof(struct node_t));
+//  Serial.print(F("TDM EEPROM Reading Addr : ")); Serial.println(eepAddr);
+//  Serial.println(sizeof(struct node_t));
   for (uint8_t i = 0 ; i < sizeof(struct node_t); i++)
   {
     *(ptr + i) = EEPROM.read(eepAddr + i);
-    Serial.print(*(ptr + i));Serial.print(F("  "));
+//    Serial.print(*(ptr + i));Serial.print(F("  "));
   }
-  Serial.println();
+//  Serial.println();
 }

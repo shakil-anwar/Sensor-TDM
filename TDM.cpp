@@ -100,10 +100,10 @@ void tdmConfirmSlot(uint8_t slotNo)
 {
   if (slotNo == tdm.freeSlot)
   {
-    Serial.println(F("Increment Slot"));
-    printSlot(&tdm.node[slotNo]);
+    Serial.print(F("Confirming Slot : "));Serial.println(slotNo);
+//    printSlot(&tdm.node[slotNo]);
+    tdm.node[slotNo].isAllotted = 1; //
     _nodeWrite(_baseAddr,&tdm.node[slotNo]);
-
     node_t nodeBuf;
     _nodeRead(_baseAddr,&nodeBuf);
     printSlot(&nodeBuf);
