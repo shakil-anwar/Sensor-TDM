@@ -18,13 +18,14 @@ struct node_t
 struct tdmMeta_t
 {
   uint8_t freeSlotId;
-  uint8_t checksum;
-}
+  uint8_t deadSlot[6];
+};
 
 struct tdm_t
 {
   struct node_t node[MAX_SENSOR_NODE];
-  uint8_t freeSlot;
+  struct tdmMeta_t meta;
+//  uint8_t freeSlot;
   uint8_t checksum;
 };
 

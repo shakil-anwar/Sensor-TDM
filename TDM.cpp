@@ -35,11 +35,14 @@ tdmMemFun_t _nodeWrite;
 
 void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite)
 {
-  
+
   _baseAddr = baseAddr;
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
   //read slot from eeprom into ram
+  Serial.println(F("Loading Saved Slot"));
+  _nodeRead(_baseAddr,(uint8_t*)&tdm,sizeof(tdm_t));
+  
 }
 
 bool tdmSync(uint32_t unixSec)
@@ -83,12 +86,15 @@ void tdmUpdateSlot(uint32_t unixSec)
 
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
 {
-  uint8_t slotAvail = tdm.freeSlot;
+  //  uint8_t slotAvail = tdm.freeSlot;
+  uint8_t slotAvail = tdm.meta.freeSlotId;
   if (slotAvail < MAX_SENSOR_NODE)
   {
+    //fill up node info
     tdm.node[slotAvail].deviceId = deviceId;
     tdm.node[slotAvail].slotNo = slotAvail;
     printSlot(&tdm.node[slotAvail]);
+
     slot -> slotNo = slotAvail;
     slot -> momentDuration = MOMENT_DURATION_SEC;
     slot -> perNodeInterval = PER_NODE_INTERVAL_SEC;
@@ -98,17 +104,20 @@ void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
 
 void tdmConfirmSlot(uint8_t slotNo)
 {
-  if (slotNo == tdm.freeSlot)
+  if (slotNo == tdm.meta.freeSlotId)
   {
-    Serial.print(F("Confirming Slot : "));Serial.println(slotNo);
-//    printSlot(&tdm.node[slotNo]);
-    tdm.node[slotNo].isAllotted = 1; //
-    uint32_t memAddr = _baseAddr + slotNo*sizeof(struct node_t);
-    _nodeWrite(memAddr,(uint8_t*)&tdm.node[slotNo], sizeof(struct node_t));
+    Serial.print(F("Confirming Slot : ")); Serial.println(slotNo);
+    tdm.node[slotNo].isAllotted = 1; // slot allocation ok
+    uint32_t memAddr = _baseAddr + slotNo * sizeof(struct node_t);
+    _nodeWrite(memAddr, (uint8_t*)&tdm.node[slotNo], sizeof(struct node_t));
+    tdm.meta.freeSlotId++;
+    memAddr = _baseAddr + sizeof(tdm.node);
+    _nodeWrite(memAddr, (uint8_t*)&tdm.meta, sizeof(struct tdmMeta_t));
+
+    //read saved data
     node_t nodeBuf;
-    _nodeRead(memAddr,(uint8_t*)&nodeBuf,sizeof(struct node_t));
+    _nodeRead(memAddr, (uint8_t*)&nodeBuf, sizeof(struct node_t));
     printSlot(&nodeBuf);
-    tdm.freeSlot++;
   }
 }
 
