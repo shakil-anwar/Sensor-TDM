@@ -27,7 +27,9 @@ struct slot_t
   uint8_t slotNo;
 };
 
-void tdmBegin(uint32_t baseAddr);
+typedef (*tdmMemFun_t)(uint32_t,struct node_t*);
+
+void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite);
 void tdmUpdateSlot(uint32_t unixSec);
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot);
 void tdmConfirmSlot(uint8_t slotNo);
@@ -35,7 +37,7 @@ void tdmConfirmSlot(uint8_t slotNo);
 struct node_t *tdmGetCurrentSlot();
 struct node_t *tdmGetNewslot();
 
-void tdmSaveNode(uint32_t addr, struct node_t *node);
-void tdmReadNode(uint32_t addr, struct node_t *node);
+//void tdmSaveNode(uint32_t addr, struct node_t *node);
+//void tdmReadNode(uint32_t addr, struct node_t *node);
 
 #endif

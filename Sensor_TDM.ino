@@ -1,9 +1,15 @@
 #include "TDM.h"
 #include "AVR_Timer1.h"
+#include <EEPROM.h>
 
+#define EEPROM_ADDR   0
+void tdmSaveNode(uint32_t addr, struct node_t *node);
+void tdmReadNode(uint32_t addr, struct node_t *node);
 uint32_t nowUnix = 0;
 
 volatile uint32_t _second = nowUnix;
+slot_t slotData;
+
 void setup()
 {
   Serial.begin(9600);
@@ -11,7 +17,7 @@ void setup()
   timer1.attachIntCompB(timerIsr);
   timer1.start();
   Serial.println(F("Setup Done"));
-  //  tdmBegin(nowUnix);
+  tdmBegin(EEPROM_ADDR,tdmReadNode,tdmSaveNode);
 }
 
 void loop()
@@ -23,12 +29,12 @@ void loop()
     Serial.print(F("Id :"));
     int id = getSerialCmd();
     Serial.println(id);
-    slot_t slotData;
+    
     tdmGetFreeSlot(id,&slotData);
   }
   else if (cmd == 2)
   {
-    
+    tdmConfirmSlot(slotData.slotNo);
   }
 }
 
@@ -49,4 +55,27 @@ int getSerialCmd()
   int cmd = Serial.parseInt();
 //  Serial.println(cmd);
   return cmd;
+}
+
+void tdmSaveNode(uint32_t addr, struct node_t *node)
+{
+  Serial.println(F("NRF EEPROM Saving.."));
+  uint16_t eepAddr = (uint16_t)addr;
+  uint8_t *ptr = (uint8_t*)node;
+  for (uint8_t i = 0; i < sizeof(struct node_t); i++)
+  {
+    EEPROM.update(eepAddr, *(ptr + i));
+  }
+  
+}
+
+void tdmReadNode(uint32_t addr, struct node_t *node)
+{
+  Serial.println(F("NRF EEPROM Reading.."));
+  uint16_t eepAddr = (uint16_t)addr;
+  uint8_t *ptr = (uint8_t*)node;
+  for (uint8_t i = 0 ; i < sizeof(struct node_t); i++)
+  {
+    *(ptr + i) = EEPROM.read(eepAddr + i);
+  }
 }

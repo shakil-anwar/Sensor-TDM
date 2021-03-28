@@ -25,14 +25,20 @@ uint8_t  _currentMomentNo;
 
 uint8_t _currentSlot;
 bool _tdmIsSync = false;
-uint32_t _baseAddr;
 struct node_t *_currentNode;
 struct tdm_t tdm;
 
 
-void tdmBegin(uint32_t baseAddr)
+uint32_t _baseAddr;
+tdmMemFun_t _nodeRead;
+tdmMemFun_t _nodeWrite;
+
+void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite)
 {
+  
   _baseAddr = baseAddr;
+  _nodeRead = nodeRead;
+  _nodeWrite = nodeWrite;
   //read slot from eeprom into ram
 }
 
@@ -95,6 +101,12 @@ void tdmConfirmSlot(uint8_t slotNo)
   if (slotNo == tdm.freeSlot)
   {
     Serial.println(F("Increment Slot"));
+    printSlot(&tdm.node[slotNo]);
+    _nodeWrite(_baseAddr,&tdm.node[slotNo]);
+
+    node_t nodeBuf;
+    _nodeRead(_baseAddr,&nodeBuf);
+    printSlot(&nodeBuf);
     tdm.freeSlot++;
   }
 }
