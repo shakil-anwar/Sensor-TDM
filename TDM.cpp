@@ -99,33 +99,6 @@ void tdmUpdateSlot(uint32_t unixSec)
     }
   }
 
-
-  //  if (_tdmIsSync == false)
-  //  {
-  //    bool sync = tdmSync(unixSec);
-  //    Serial.print(F("------------------>Sync :")); Serial.println(sync);
-  //    if (sync)
-  //    {
-  //      _tdmIsSync = true;
-  //    }
-  //  }
-  //  else
-  //  {
-  //    _MomentSec++;
-  //    if (_MomentSec - _prevMomentSec >= PER_NODE_INTERVAL_SEC)
-  //    {
-  //      _currentSlot++;
-  //      _currentNode = &tdm.node[_currentSlot];
-  //      printSlot(_currentNode);
-  //      if (_currentSlot >= MAX_SENSOR_NODE)
-  //      {
-  //        //Start a new momenet and update time
-  //        tdmSync(unixSec);
-  //      }
-  //      _prevMomentSec = _MomentSec;
-  //    }
-  //  }
-
 }
 
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
