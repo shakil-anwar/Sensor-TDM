@@ -15,13 +15,14 @@ slot_t slotData;
 void setup()
 {
   Serial.begin(9600);
-//  timer1.initialize(1);
-//  timer1.attachIntCompB(timerIsr);
-//  timer1.start();
+
   Serial.println(F("Setup Done"));
-  
   tdmBegin(EEPROM_ADDR, eepromRead, eepromUpdate);
-//  tdmReset();
+  //  tdmReset();
+
+    timer1.initialize(1);
+    timer1.attachIntCompB(timerIsr);
+    timer1.start();
 }
 
 void loop()
@@ -45,8 +46,8 @@ void loop()
 void timerIsr(void)
 {
   _second++;
-  //  Serial.print(F("Sec : ")); Serial.println(_second);
-  //  tdmUpdateSlot(_second);
+  Serial.print(F("Sec : ")); Serial.println(_second);
+  tdmUpdateSlot(_second);
 }
 
 int getSerialCmd()
@@ -65,14 +66,14 @@ void tdmSaveNode(uint32_t addr, struct node_t *node)
 {
   uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = (uint8_t*)node;
-//  Serial.print(F("TDM EEPROM Saving Addr : ")); Serial.println(eepAddr);
-//  Serial.println(sizeof(struct node_t));
+  //  Serial.print(F("TDM EEPROM Saving Addr : ")); Serial.println(eepAddr);
+  //  Serial.println(sizeof(struct node_t));
   for (uint8_t i = 0; i < sizeof(struct node_t); i++)
   {
-    EEPROM.update(eepAddr+i, *(ptr + i));
-//    Serial.print(*(ptr + i));Serial.print(F("  "));
+    EEPROM.update(eepAddr + i, *(ptr + i));
+    //    Serial.print(*(ptr + i));Serial.print(F("  "));
   }
-//  Serial.println();
+  //  Serial.println();
 
 }
 
@@ -80,40 +81,40 @@ void tdmReadNode(uint32_t addr, struct node_t *node)
 {
   uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = (uint8_t*)node;
-//  Serial.print(F("TDM EEPROM Reading Addr : ")); Serial.println(eepAddr);
-//  Serial.println(sizeof(struct node_t));
+  //  Serial.print(F("TDM EEPROM Reading Addr : ")); Serial.println(eepAddr);
+  //  Serial.println(sizeof(struct node_t));
   for (uint8_t i = 0 ; i < sizeof(struct node_t); i++)
   {
     *(ptr + i) = EEPROM.read(eepAddr + i);
-//    Serial.print(*(ptr + i));Serial.print(F("  "));
+    //    Serial.print(*(ptr + i));Serial.print(F("  "));
   }
-//  Serial.println();
+  //  Serial.println();
 }
 
 void eepromRead(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-  
+
   uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = buf;
   Serial.print(F("EEPROM Reading Addr : ")); Serial.println(eepAddr);
   for (uint16_t i = 0 ; i < len; i++)
   {
     *(ptr + i) = EEPROM.read(eepAddr + i);
-     Serial.print( *(ptr + i));Serial.print(F("  "));
+    Serial.print( *(ptr + i)); Serial.print(F("  "));
   }
   Serial.println();
 }
 
 void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-  
+
   uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = buf;
   Serial.print(F("EEPROM Update Addr : ")); Serial.println(eepAddr);
   for (uint16_t i = 0; i < len; i++)
   {
-    EEPROM.update(eepAddr+i, *(ptr + i));
-    Serial.print( *(ptr + i));Serial.print(F("  "));
+    EEPROM.update(eepAddr + i, *(ptr + i));
+    Serial.print( *(ptr + i)); Serial.print(F("  "));
   }
   Serial.println();
 }
