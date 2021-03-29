@@ -7,7 +7,7 @@
 //void tdmReadNode(uint32_t addr, struct node_t *node);
 void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len);
 void eepromRead(uint32_t addr, uint8_t *buf, uint16_t len);
-uint32_t nowUnix = 0;
+uint32_t nowUnix =550;
 
 volatile uint32_t _second = nowUnix;
 slot_t slotData;
@@ -15,14 +15,13 @@ slot_t slotData;
 void setup()
 {
   Serial.begin(9600);
-
   Serial.println(F("Setup Done"));
   tdmBegin(EEPROM_ADDR, eepromRead, eepromUpdate);
   //  tdmReset();
 
-    timer1.initialize(1);
-    timer1.attachIntCompB(timerIsr);
-    timer1.start();
+  timer1.initialize(1);
+  timer1.attachIntCompB(timerIsr);
+  timer1.start();
 }
 
 void loop()
