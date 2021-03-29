@@ -34,9 +34,9 @@ struct slot_t
   uint16_t perNodeInterval;
   uint8_t slotNo;
 };
-
 typedef void (*tdmMemFun_t)(uint32_t,uint8_t*,uint16_t len);
-//void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len)
+
+
 
 void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite);
 void tdmUpdateSlot(uint32_t unixSec);

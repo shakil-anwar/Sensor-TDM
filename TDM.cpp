@@ -159,7 +159,7 @@ void printMomentVar()
 
 void printSlot(struct node_t *node)
 {
-  Serial.print(F("Slot No : ")); Serial.print(node -> slotNo);
+  Serial.print(F("Slot No:")); Serial.print(node -> slotNo);
   Serial.print(F(" | deviceId:")); Serial.print(node -> deviceId);
   Serial.print(F(" | isAllotted:")); Serial.print(node -> isAllotted);
   Serial.print(F(" | losSlot:")); Serial.println(node -> losSlot);
