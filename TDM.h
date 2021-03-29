@@ -25,7 +25,6 @@ struct tdm_t
 {
   struct node_t node[MAX_SENSOR_NODE];
   struct tdmMeta_t meta;
-//  uint8_t freeSlot;
   uint8_t checksum;
 };
 
@@ -43,13 +42,10 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite);
 void tdmUpdateSlot(uint32_t unixSec);
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot);
 void tdmConfirmSlot(uint8_t slotNo);
-
-struct node_t *tdmGetCurrentSlot();
-struct node_t *tdmGetNewslot();
+void tdmReset();
 
 
 void printSlot(struct node_t *node);
-//void tdmSaveNode(uint32_t addr, struct node_t *node);
-//void tdmReadNode(uint32_t addr, struct node_t *node);
+
 
 #endif

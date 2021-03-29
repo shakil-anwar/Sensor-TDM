@@ -7,7 +7,7 @@
 */
 
 void printMomentVar();
-
+void printAllSlot();
 
 #define HOUR_SEC      3600UL
 #define DAY_TOTAL_SEC (24UL*HOUR_SEC)
@@ -39,19 +39,29 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite)
   _baseAddr = baseAddr;
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
-  //read slot from eeprom into ram
-  Serial.println(F("Loading Saved Slot"));
-  _nodeRead(_baseAddr,(uint8_t*)&tdm,sizeof(tdm_t));
   
+//  read slot from eeprom into ram
+  Serial.println(F("Loading Saved Slot"));
+  _nodeRead(_baseAddr, (uint8_t*)&tdm, sizeof(tdm_t));
+  printAllSlot();
+
+}
+
+void tdmReset()
+{
+  Serial.println(F("Resetting TDM Slot Data"));
+  memset(&tdm, 0, sizeof(tdm_t));
+  _nodeWrite(_baseAddr, (uint8_t*)&tdm, sizeof(tdm_t));
+//  _nodeRead(_baseAddr, (uint8_t*)&tdm, sizeof(tdm_t));
 }
 
 bool tdmSync(uint32_t unixSec)
 {
-  _todaySec = unixSec % DAY_TOTAL_SEC;        //calculate today remaining second
-  _MomentSec = _todaySec % MOMENT_DURATION_SEC; //Calculate current moment second
+  _todaySec = unixSec % DAY_TOTAL_SEC;                //calculate today remaining second
+  _MomentSec = _todaySec % MOMENT_DURATION_SEC;       //Calculate current moment second
   _prevMomentSec = _MomentSec;
-  _currentSlot = _MomentSec / PER_NODE_INTERVAL_SEC; //calculate current slot no
-  return (_MomentSec % PER_NODE_INTERVAL_SEC == 0); //starting of new slot returns true
+  _currentSlot = _MomentSec / PER_NODE_INTERVAL_SEC;  //calculate current slot no
+  return (_MomentSec % PER_NODE_INTERVAL_SEC == 0);   //starting of new slot returns true
 }
 
 void tdmUpdateSlot(uint32_t unixSec)
@@ -88,6 +98,7 @@ void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
 {
   //  uint8_t slotAvail = tdm.freeSlot;
   uint8_t slotAvail = tdm.meta.freeSlotId;
+  Serial.print(F("slot Avail :")); Serial.println(slotAvail);
   if (slotAvail < MAX_SENSOR_NODE)
   {
     //fill up node info
@@ -108,16 +119,25 @@ void tdmConfirmSlot(uint8_t slotNo)
   {
     Serial.print(F("Confirming Slot : ")); Serial.println(slotNo);
     tdm.node[slotNo].isAllotted = 1; // slot allocation ok
+
     uint32_t memAddr = _baseAddr + slotNo * sizeof(struct node_t);
+    Serial.print(F("node addr : ")); Serial.println(memAddr);
     _nodeWrite(memAddr, (uint8_t*)&tdm.node[slotNo], sizeof(struct node_t));
-    tdm.meta.freeSlotId++;
-    memAddr = _baseAddr + sizeof(tdm.node);
-    _nodeWrite(memAddr, (uint8_t*)&tdm.meta, sizeof(struct tdmMeta_t));
 
     //read saved data
     node_t nodeBuf;
     _nodeRead(memAddr, (uint8_t*)&nodeBuf, sizeof(struct node_t));
     printSlot(&nodeBuf);
+
+    tdm.meta.freeSlotId++;
+    memAddr = _baseAddr + sizeof(tdm.node);
+    _nodeWrite(memAddr, (uint8_t*)&tdm.meta, sizeof(struct tdmMeta_t));
+
+  }
+  else
+  {
+    Serial.print(F("slotNo :")); Serial.println(slotNo);
+    Serial.print(F("tdm.meta.freeSlotId :")); Serial.println(tdm.meta.freeSlotId);
   }
 }
 
@@ -139,8 +159,14 @@ void printSlot(struct node_t *node)
   Serial.print(F("losSlot:")); Serial.println(node -> losSlot);
 }
 
-
-
+void printAllSlot()
+{
+  for (uint8_t i = 0; i < MAX_SENSOR_NODE; i++)
+  {
+    Serial.println(i);
+    printSlot(&tdm.node[i]);
+  }
+}
 
 
 

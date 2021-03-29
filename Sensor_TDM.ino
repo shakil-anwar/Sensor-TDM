@@ -3,8 +3,8 @@
 #include <EEPROM.h>
 
 #define EEPROM_ADDR   0
-void tdmSaveNode(uint32_t addr, struct node_t *node);
-void tdmReadNode(uint32_t addr, struct node_t *node);
+//void tdmSaveNode(uint32_t addr, struct node_t *node);
+//void tdmReadNode(uint32_t addr, struct node_t *node);
 void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len);
 void eepromRead(uint32_t addr, uint8_t *buf, uint16_t len);
 uint32_t nowUnix = 0;
@@ -15,23 +15,13 @@ slot_t slotData;
 void setup()
 {
   Serial.begin(9600);
-  timer1.initialize(1);
-  timer1.attachIntCompB(timerIsr);
-  timer1.start();
+//  timer1.initialize(1);
+//  timer1.attachIntCompB(timerIsr);
+//  timer1.start();
   Serial.println(F("Setup Done"));
-  tdmBegin(EEPROM_ADDR, eepromRead, eepromUpdate);
   
-//  struct node_t nodeBuf;
-//  nodeBuf.deviceId  = 20;
-//  nodeBuf.slotNo = 2;
-//  nodeBuf.isAllotted = 1;
-//  nodeBuf.losSlot = 0;
-//  nodeBuf.reserve = 0;
-//  tdmSaveNode(10, &nodeBuf);
-//
-//  struct node_t nodebuf2;
-//  tdmReadNode(10, &nodebuf2);
-//  printSlot(&nodebuf2);
+  tdmBegin(EEPROM_ADDR, eepromRead, eepromUpdate);
+//  tdmReset();
 }
 
 void loop()
@@ -109,7 +99,9 @@ void eepromRead(uint32_t addr, uint8_t *buf, uint16_t len)
   for (uint16_t i = 0 ; i < len; i++)
   {
     *(ptr + i) = EEPROM.read(eepAddr + i);
+     Serial.print( *(ptr + i));Serial.print(F("  "));
   }
+  Serial.println();
 }
 
 void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len)
@@ -121,5 +113,7 @@ void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len)
   for (uint16_t i = 0; i < len; i++)
   {
     EEPROM.update(eepAddr+i, *(ptr + i));
+    Serial.print( *(ptr + i));Serial.print(F("  "));
   }
+  Serial.println();
 }
