@@ -103,7 +103,6 @@ void tdmUpdateSlot(uint32_t unixSec)
 
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
 {
-  //  uint8_t slotAvail = tdm.freeSlot;
   uint8_t slotAvail = tdm.meta.freeSlotId;
   Serial.print(F("slot Avail :")); Serial.println(slotAvail);
   if (slotAvail < MAX_SENSOR_NODE)
@@ -136,6 +135,7 @@ void tdmConfirmSlot(uint8_t slotNo)
     _nodeRead(memAddr, (uint8_t*)&nodeBuf, sizeof(struct node_t));
     printSlot(&nodeBuf);
 
+    //update metadata
     tdm.meta.freeSlotId++;
     memAddr = _baseAddr + sizeof(tdm.node);
     _nodeWrite(memAddr, (uint8_t*)&tdm.meta, sizeof(struct tdmMeta_t));
@@ -159,11 +159,10 @@ void printMomentVar()
 
 void printSlot(struct node_t *node)
 {
-  Serial.println(F("<--------Current Slot---------->"));
-  Serial.print(F("deviceId:")); Serial.println(node -> deviceId);
-  Serial.print(F("slotNo:")); Serial.println(node -> slotNo);
-  Serial.print(F("isAllotted:")); Serial.println(node -> isAllotted);
-  Serial.print(F("losSlot:")); Serial.println(node -> losSlot);
+  Serial.print(F("Slot No : ")); Serial.print(node -> slotNo);
+  Serial.print(F(" | deviceId:")); Serial.print(node -> deviceId);
+  Serial.print(F(" | isAllotted:")); Serial.print(node -> isAllotted);
+  Serial.print(F(" | losSlot:")); Serial.println(node -> losSlot);
 }
 
 void printAllSlot()
@@ -174,77 +173,3 @@ void printAllSlot()
     printSlot(&tdm.node[i]);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-  //void tdmTimerInit(uint32_t unixSec)
-  //{
-  //  _todaySec = unixSec%DAY_TOTAL_SEC;
-  //  _currentMomentNo = _todaySec/MOMENT_DURATION_SEC;
-  //  _MomentSec = _todaySec%MOMENT_DURATION_SEC;
-  //
-  //}
-
-  void setStatus(uint8_t slot,uint8_t status);
-
-
-  nodeBuf_t nodeBuf;
-  uint8_t _currentSlot;//current slot available for new registration
-  uint8_t _availableSlot;//available slot
-
-  node_t _node;
-
-  void nodeslotBegin()
-  {
-  //parse slot from persistant storage.
-
-  _currentSlot = 0;
-  _node.addr = 0;
-  _node.slot = 0;
-  }
-
-  void setStatus(uint8_t slot,uint8_t status)
-  {
-  uint8_t byteNo = slot>>1; //divided by 2;
-  uint8_t odd = slot - (byteNo<<1);
-  uint8_t reg;
-  if(odd)
-  {
-    reg = nodeBuf.status[byteNo]>>4;
-  }
-  else
-  {
-    reg = nodeBuf.status[byteNo]>>0;
-  }
-
-  //  reg = reg
-
-
-  }
-
-  nodeSlot_t *getSlot(uint16_t addr)
-  {
-  _node.addr = addr;
-  _node.slot = _currentSlot;
-
-  return &_node;
-  }
-
-  void slotConfirmed(node_t *node)
-  {
-
-  _currentSlot++;
-  }
-
-*/
