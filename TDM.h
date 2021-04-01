@@ -38,6 +38,7 @@ struct tdmMeta_t
   uint8_t maxNode;
   uint8_t freeSlotId;
   uint8_t deadSlot[6];
+  uint8_t reserve;
   uint16_t momentDuration;
 };
 

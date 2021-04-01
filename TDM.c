@@ -21,7 +21,7 @@ uint32_t _todaySec;
 uint16_t _MomentSec;
 uint16_t _prevMomentSec;
 uint8_t  _currentMomentNo;
-
+uint16_t _perNodeInterval;
 
 uint8_t _currentSlot;
 bool _tdmIsSync = false;
@@ -44,6 +44,9 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
 
   tdm.meta.maxNode = maxNode;
   tdm.meta.momentDuration = momentDuration;
+  _perNodeInterval = (momentDuration/maxNode);
+  SerialPrintF(P("Max Node Number: "));
+  SerialPrintlnU8(tdm.meta.maxNode);
 
 
   //  read slot from eeprom into ram
@@ -64,10 +67,10 @@ void tdmReset()
 bool tdmSync(uint32_t unixSec)
 {
   _todaySec = unixSec % DAY_TOTAL_SEC;                //calculate today remaining second
-  _MomentSec = _todaySec % MOMENT_DURATION_SEC;       //Calculate current moment second
+  _MomentSec = _todaySec % tdm.meta.momentDuration;       //Calculate current moment second
   _prevMomentSec = _MomentSec;
-  _currentSlot = _MomentSec / PER_NODE_INTERVAL_SEC;  //calculate current slot no
-  return (_MomentSec % PER_NODE_INTERVAL_SEC == 0);   //starting of new slot returns true
+  _currentSlot = _MomentSec / _perNodeInterval;  //calculate current slot no
+  return (_MomentSec % _perNodeInterval == 0);   //starting of new slot returns true
 }
 
 void tdmUpdateSlot(uint32_t unixSec)
@@ -75,10 +78,10 @@ void tdmUpdateSlot(uint32_t unixSec)
   if (_tdmIsSync)
   {
     _MomentSec++;
-    if (_MomentSec - _prevMomentSec >= PER_NODE_INTERVAL_SEC)
+    if (_MomentSec - _prevMomentSec >= _perNodeInterval)
     {
       _currentSlot++;
-      if (_currentSlot > MAX_SENSOR_NODE - 1)
+      if (_currentSlot > tdm.meta.maxNode - 1)
       {
         SerialPrintlnF(P("Max Node Exceeded----------------->"));
         //Start a new momenet and update time
@@ -116,7 +119,7 @@ void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
 {
   uint8_t slotAvail = tdm.meta.freeSlotId;
   SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);
-  if (slotAvail < MAX_SENSOR_NODE)
+  if (slotAvail < tdm.meta.maxNode)
   {
     //fill up node info
     tdm.node[slotAvail].deviceId = deviceId;
@@ -124,10 +127,9 @@ void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
     printSlot(&tdm.node[slotAvail]);
 
     slot -> slotNo = slotAvail;
-    slot -> momentDuration = MOMENT_DURATION_SEC;
-    slot -> perNodeInterval = PER_NODE_INTERVAL_SEC;
+    slot -> momentDuration = tdm.meta.momentDuration;
+    slot -> perNodeInterval = _perNodeInterval;
   }
-
 }
 
 void tdmConfirmSlot(uint8_t slotNo)
@@ -178,9 +180,14 @@ void printSlot(struct node_t *node)
 
 void printAllSlot()
 {
-  for (uint8_t i = 0; i < MAX_SENSOR_NODE; i++)
+  uint8_t i;
+  SerialPrintF(P("Max Node Number: "));
+  SerialPrintlnU8(tdm.meta.maxNode);
+  for ( i= 0; i < tdm.meta.maxNode; i++)
   {
     SerialPrintlnU8(i);
     printSlot(&tdm.node[i]);
   }
+  SerialPrintF(P("Max Node Number: "));
+  SerialPrintlnU8(tdm.meta.maxNode);
 }

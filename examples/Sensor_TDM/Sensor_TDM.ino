@@ -16,8 +16,8 @@ void setup()
 {
   Serial.begin(9600);
   Serial.println(F("Setup Done"));
-  tdmBegin(EEPROM_ADDR, eepromRead, eepromUpdate);
-  //  tdmReset();
+  tdmBegin(EEPROM_ADDR, eepromRead, eepromUpdate, 600, 100);
+    tdmReset();
 
   timer1.initialize(1);
   timer1.attachIntCompB(timerIsr);
