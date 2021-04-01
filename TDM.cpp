@@ -101,6 +101,11 @@ void tdmUpdateSlot(uint32_t unixSec)
 
 }
 
+node_t *tdmGetCurrentNode()
+{
+  return _currentNode;
+}
+
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
 {
   uint8_t slotAvail = tdm.meta.freeSlotId;
