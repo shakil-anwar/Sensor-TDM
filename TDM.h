@@ -1,10 +1,31 @@
 #ifndef _TDM_H_
 #define _TDM_H_
-#include <Arduino.h>
+
+#if defined(ARDUINO_ARCH_AVR)
+    #include <Arduino.h>
+    #if defined(PROD_BUILD)
+        #include "../arduinoCwrapper/Serial.h"
+        #include "../arduinoCwrapper/spi_driver.h"
+    #else
+        #include "spi_driver.h"
+        #include "Serial.h"
+    #endif
+#elif defined(ARDUINO_ARCH_SAM)
+    #include <Arduino.h>
+#elif defined(__MSP430G2553__)
+    #include <msp430.h>
+    #include "mspDriver.h"
+#else
+    #error "nRF24_DRIVER did not find chip architecture "
+#endif
 
 #define MAX_SENSOR_NODE               100
 #define MOMENT_DURATION_SEC           600UL
 #define PER_NODE_INTERVAL_SEC         (MOMENT_DURATION_SEC/MAX_SENSOR_NODE)
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct node_t
 {
@@ -47,6 +68,10 @@ void *tdmGetCurrentNode();
 
 
 void printSlot(struct node_t *node);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

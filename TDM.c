@@ -41,17 +41,17 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite)
   _nodeWrite = nodeWrite;
 
   //  read slot from eeprom into ram
-  Serial.println(F("Loading Saved Slot"));
-  _nodeRead(_baseAddr, (uint8_t*)&tdm, sizeof(tdm_t));
+  SerialPrintlnF(P("Loading Saved Slot"));
+  _nodeRead(_baseAddr, (uint8_t*)&tdm, sizeof(struct tdm_t));
   printAllSlot();
 
 }
 
 void tdmReset()
 {
-  Serial.println(F("Resetting TDM Slot Data"));
-  memset(&tdm, 0, sizeof(tdm_t));
-  _nodeWrite(_baseAddr, (uint8_t*)&tdm, sizeof(tdm_t));
+  SerialPrintlnF(P("Resetting TDM Slot Data"));
+  memset(&tdm, 0, sizeof(struct tdm_t));
+  _nodeWrite(_baseAddr, (uint8_t*)&tdm, sizeof(struct tdm_t));
   //  _nodeRead(_baseAddr, (uint8_t*)&tdm, sizeof(tdm_t));
 }
 
@@ -74,7 +74,7 @@ void tdmUpdateSlot(uint32_t unixSec)
       _currentSlot++;
       if (_currentSlot > MAX_SENSOR_NODE - 1)
       {
-        Serial.println(F("Max Node Exceeded----------------->"));
+        SerialPrintlnF(P("Max Node Exceeded----------------->"));
         //Start a new momenet and update time
         _MomentSec = 0;
         _currentSlot = 0;
@@ -89,7 +89,7 @@ void tdmUpdateSlot(uint32_t unixSec)
   else
   {
     bool sync = tdmSync(unixSec);
-    Serial.print(F("------------------>Sync :")); Serial.println(sync);
+    SerialPrintF(P("------------------>Sync :")); SerialPrintlnU8((uint8_t)sync);
     if (sync)
     {
       _currentNode = &tdm.node[_currentSlot];
@@ -101,7 +101,7 @@ void tdmUpdateSlot(uint32_t unixSec)
 
 }
 
-void *tdmGetCurrentNode();
+void *tdmGetCurrentNode()
 {
   return (void*)_currentNode;
 }
@@ -109,7 +109,7 @@ void *tdmGetCurrentNode();
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
 {
   uint8_t slotAvail = tdm.meta.freeSlotId;
-  Serial.print(F("slot Avail :")); Serial.println(slotAvail);
+  SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);
   if (slotAvail < MAX_SENSOR_NODE)
   {
     //fill up node info
@@ -128,15 +128,15 @@ void tdmConfirmSlot(uint8_t slotNo)
 {
   if (slotNo == tdm.meta.freeSlotId)
   {
-    Serial.print(F("Confirming Slot : ")); Serial.println(slotNo);
+    SerialPrintF(P("Confirming Slot : ")); SerialPrintlnU8(slotNo);
     tdm.node[slotNo].isAllotted = 1; // slot allocation ok
 
     uint32_t memAddr = _baseAddr + slotNo * sizeof(struct node_t);
-    Serial.print(F("node addr : ")); Serial.println(memAddr);
+    SerialPrintF(P("node addr : ")); SerialPrintlnU8(memAddr);
     _nodeWrite(memAddr, (uint8_t*)&tdm.node[slotNo], sizeof(struct node_t));
 
     //read saved data
-    node_t nodeBuf;
+    struct node_t nodeBuf;
     _nodeRead(memAddr, (uint8_t*)&nodeBuf, sizeof(struct node_t));
     printSlot(&nodeBuf);
 
@@ -148,8 +148,8 @@ void tdmConfirmSlot(uint8_t slotNo)
   }
   else
   {
-    Serial.print(F("slotNo :")); Serial.println(slotNo);
-    Serial.print(F("tdm.meta.freeSlotId :")); Serial.println(tdm.meta.freeSlotId);
+    SerialPrintF(P("slotNo :")); SerialPrintlnU8(slotNo);
+    SerialPrintF(P("tdm.meta.freeSlotId :")); SerialPrintlnU8(tdm.meta.freeSlotId);
   }
 }
 
@@ -157,24 +157,24 @@ void tdmConfirmSlot(uint8_t slotNo)
 
 void printMomentVar()
 {
-  Serial.print(F("_todaySec : ")); Serial.print(_todaySec);
-  Serial.print(F(" | _MomentSec : ")); Serial.print(_MomentSec);
-  Serial.print(F(" | _currentSlot : ")); Serial.println(_currentSlot);
+  SerialPrintF(P("_todaySec : ")); SerialPrintlnU32(_todaySec);
+  SerialPrintF(P(" | _MomentSec : ")); SerialPrintlnU16(_MomentSec);
+  SerialPrintF(P(" | _currentSlot : ")); SerialPrintlnU8(_currentSlot);
 }
 
 void printSlot(struct node_t *node)
 {
-  Serial.print(F("Slot No:")); Serial.print(node -> slotNo);
-  Serial.print(F(" | deviceId:")); Serial.print(node -> deviceId);
-  Serial.print(F(" | isAllotted:")); Serial.print(node -> isAllotted);
-  Serial.print(F(" | losSlot:")); Serial.println(node -> losSlot);
+  SerialPrintF(P("Slot No:")); SerialPrintlnU8(node -> slotNo);
+  SerialPrintF(P(" | deviceId:")); SerialPrintlnU8(node -> deviceId);
+  SerialPrintF(P(" | isAllotted:")); SerialPrintlnU8(node -> isAllotted);
+  SerialPrintF(P(" | losSlot:")); SerialPrintlnU8(node -> losSlot);
 }
 
 void printAllSlot()
 {
   for (uint8_t i = 0; i < MAX_SENSOR_NODE; i++)
   {
-    Serial.println(i);
+    SerialPrintlnU8(i);
     printSlot(&tdm.node[i]);
   }
 }
