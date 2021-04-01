@@ -101,9 +101,9 @@ void tdmUpdateSlot(uint32_t unixSec)
 
 }
 
-node_t *tdmGetCurrentNode()
+void *tdmGetCurrentNode();
 {
-  return _currentNode;
+  return (void*)_currentNode;
 }
 
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)

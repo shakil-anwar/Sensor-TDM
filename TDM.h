@@ -43,7 +43,7 @@ void tdmUpdateSlot(uint32_t unixSec);
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot);
 void tdmConfirmSlot(uint8_t slotNo);
 void tdmReset();
-node_t *tdmGetCurrentNode();
+void *tdmGetCurrentNode();
 
 
 void printSlot(struct node_t *node);
