@@ -12,11 +12,8 @@
     #endif
 #elif defined(ARDUINO_ARCH_SAM)
     #include <Arduino.h>
-#elif defined(__MSP430G2553__)
-    #include <msp430.h>
-    #include "mspDriver.h"
 #else
-    #error "nRF24_DRIVER did not find chip architecture "
+    #error "TDM did not find chip architecture "
 #endif
 
 #define MAX_SENSOR_NODE               100
