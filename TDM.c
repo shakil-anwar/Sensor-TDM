@@ -21,7 +21,7 @@ uint32_t _todaySec;
 uint16_t _MomentSec;
 uint16_t _prevMomentSec;
 uint8_t  _currentMomentNo;
-uint16_t _perNodeInterval;
+// uint16_t tdm.meta.perNodeInterval;  
 
 uint8_t _currentSlot;
 bool _tdmIsSync = false;
@@ -35,25 +35,25 @@ tdmMemFun_t _nodeWrite;
 
 
 void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
-              uint16_t momentDuration, uint8_t maxNode)
+              uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot)
 {
   SerialBegin(9600);
   _baseAddr = baseAddr;
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
 
-  tdm.meta.maxNode = maxNode;
-  tdm.meta.momentDuration = momentDuration;
-  _perNodeInterval = (momentDuration/maxNode);
-  SerialPrintF(P("Max Node Number: "));
-  SerialPrintlnU8(tdm.meta.maxNode);
-
-
-  //  read slot from eeprom into ram
+   //  read slot from eeprom into ram
   SerialPrintlnF(P("Loading Saved Slot"));
   _nodeRead(_baseAddr, (uint8_t*)&tdm, sizeof(struct tdm_t));
   printAllSlot();
 
+  tdm.meta.maxNode = maxNode;
+  tdm.meta.momentDuration = momentDuration;
+  tdm.meta.reserveSlot = reserveSlot;
+  tdm.meta.perNodeInterval = (momentDuration/maxNode);
+
+  SerialPrintF(P("Max Node Number: "));
+  SerialPrintlnU8(tdm.meta.maxNode);
 }
 
 void tdmReset()
@@ -69,8 +69,8 @@ bool tdmSync(uint32_t unixSec)
   _todaySec = unixSec % DAY_TOTAL_SEC;                //calculate today remaining second
   _MomentSec = _todaySec % tdm.meta.momentDuration;       //Calculate current moment second
   _prevMomentSec = _MomentSec;
-  _currentSlot = _MomentSec / _perNodeInterval;  //calculate current slot no
-  return (_MomentSec % _perNodeInterval == 0);   //starting of new slot returns true
+  _currentSlot = _MomentSec / tdm.meta.perNodeInterval;  //calculate current slot no
+  return (_MomentSec % tdm.meta.perNodeInterval == 0);   //starting of new slot returns true
 }
 
 void tdmUpdateSlot(uint32_t unixSec)
@@ -78,7 +78,7 @@ void tdmUpdateSlot(uint32_t unixSec)
   if (_tdmIsSync)
   {
     _MomentSec++;
-    if (_MomentSec - _prevMomentSec >= _perNodeInterval)
+    if (_MomentSec - _prevMomentSec >= tdm.meta.perNodeInterval)
     {
       _currentSlot++;
       if (_currentSlot > tdm.meta.maxNode - 1)
@@ -128,7 +128,7 @@ void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot)
 
     slot -> slotNo = slotAvail;
     slot -> momentDuration = tdm.meta.momentDuration;
-    slot -> perNodeInterval = _perNodeInterval;
+    slot -> perNodeInterval = tdm.meta.perNodeInterval;
   }
 }
 
@@ -172,9 +172,9 @@ void printMomentVar()
 
 void printSlot(struct node_t *node)
 {
-  SerialPrintF(P("Slot No:")); SerialPrintlnU8(node -> slotNo);
-  SerialPrintF(P(" | deviceId:")); SerialPrintlnU8(node -> deviceId);
-  SerialPrintF(P(" | isAllotted:")); SerialPrintlnU8(node -> isAllotted);
+  SerialPrintF(P("Slot No:")); SerialPrintU8(node -> slotNo);
+  SerialPrintF(P(" | deviceId:")); SerialPrintU8(node -> deviceId);
+  SerialPrintF(P(" | isAllotted:")); SerialPrintU8(node -> isAllotted);
   SerialPrintF(P(" | losSlot:")); SerialPrintlnU8(node -> losSlot);
 }
 

@@ -35,11 +35,13 @@ struct node_t
 
 struct tdmMeta_t
 {
-  uint8_t maxNode;
   uint8_t freeSlotId;
-  uint8_t deadSlot[6];
   uint8_t reserve;
+  uint8_t deadSlot[6];
+  uint8_t maxNode;
+  uint8_t reserveSlot;
   uint16_t momentDuration;
+  uint8_t perNodeInterval;
 };
 
 struct tdm_t
@@ -60,7 +62,7 @@ typedef void (*tdmMemFun_t)(uint32_t,uint8_t*,uint16_t len);
 
 
 void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
-              uint16_t momentDuration, uint8_t maxNode);
+              uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
 void tdmUpdateSlot(uint32_t unixSec);
 void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot);
 void tdmConfirmSlot(uint8_t slotNo);
