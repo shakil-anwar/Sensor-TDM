@@ -33,12 +33,18 @@ uint32_t _baseAddr;
 tdmMemFun_t _nodeRead;
 tdmMemFun_t _nodeWrite;
 
-void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite)
+
+void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
+              uint16_t momentDuration, uint8_t maxNode)
 {
 
   _baseAddr = baseAddr;
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
+
+  tdm.meta.maxNode = maxNode;
+  tdm.meta.momentDuration = momentDuration;
+
 
   //  read slot from eeprom into ram
   SerialPrintlnF(P("Loading Saved Slot"));
