@@ -37,7 +37,7 @@ tdmMemFun_t _nodeWrite;
 void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
               uint16_t momentDuration, uint8_t maxNode)
 {
-
+  SerialBegin(9600);
   _baseAddr = baseAddr;
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
