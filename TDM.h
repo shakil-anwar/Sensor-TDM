@@ -1,13 +1,15 @@
 #ifndef _TDM_H_
 #define _TDM_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(ARDUINO_ARCH_AVR)
     #include <Arduino.h>
     #if defined(PROD_BUILD)
         #include "../arduinoCwrapper/Serial.h"
-        #include "../arduinoCwrapper/spi_driver.h"
     #else
-        #include "spi_driver.h"
         #include "Serial.h"
     #endif
 #elif defined(ARDUINO_ARCH_SAM)
@@ -20,9 +22,7 @@
 #define MOMENT_DURATION_SEC           600UL
 #define PER_NODE_INTERVAL_SEC         (MOMENT_DURATION_SEC/MAX_SENSOR_NODE)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef void (*tdmMemFun_t)(uint32_t,uint8_t*,uint16_t len);
 
 struct node_t
 {
@@ -36,12 +36,10 @@ struct node_t
 struct tdmMeta_t
 {
   uint8_t freeSlotId;
-  uint8_t reserve;
-  uint8_t deadSlot[6];
   uint8_t maxNode;
   uint8_t reserveSlot;
-  uint16_t momentDuration;
   uint8_t perNodeInterval;
+  uint16_t momentDuration;
 };
 
 struct tdm_t
@@ -51,24 +49,16 @@ struct tdm_t
   uint8_t checksum;
 };
 
-struct slot_t
-{
-  uint16_t momentDuration;
-  uint16_t perNodeInterval;
-  uint8_t slotNo;
-};
-typedef void (*tdmMemFun_t)(uint32_t,uint8_t*,uint16_t len);
-
 
 
 void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
               uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
-void tdmUpdateSlot(uint32_t unixSec);
-void tdmGetFreeSlot(uint16_t deviceId, struct slot_t *slot);
-void tdmConfirmSlot(uint8_t slotNo);
 void tdmReset();
-void *tdmGetCurrentNode();
 
+void tdmUpdateSlot(uint32_t unixSec);
+uint8_t tdmGetFreeSlot(uint16_t deviceId);
+bool tdmConfirmSlot(uint8_t slotNo);
+struct node_t *tdmGetCurrentNode();
 
 void printSlot(struct node_t *node);
 
