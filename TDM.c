@@ -112,6 +112,10 @@ struct node_t *tdmGetCurrentNode()
   return &tdm.node[_currentSlot];
 }
 
+struct tdmMeta_t *tdmGetMetaData()
+{
+  return &tdm.meta;
+}
 
 uint8_t tdmGetFreeSlot(uint16_t deviceId)
 {
@@ -153,7 +157,8 @@ bool tdmConfirmSlot(uint8_t slotNo)
   }
   else
   {
-    SerialPrintF(P("slotNo :")); SerialPrintlnU8(slotNo);
+
+    SerialPrintF(P("slotNo :")); SerialPrintU8(slotNo); SerialPrintlnF(P("Slot not confirmed"));
     SerialPrintF(P("tdm.meta.freeSlotId :")); SerialPrintlnU8(tdm.meta.freeSlotId);
   }
 }
