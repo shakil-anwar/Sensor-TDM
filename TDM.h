@@ -22,7 +22,7 @@ extern "C" {
 #define MOMENT_DURATION_SEC           600UL
 #define PER_NODE_INTERVAL_SEC         (MOMENT_DURATION_SEC/MAX_SENSOR_NODE)
 
-typedef void (*tdmMemFun_t)(uint32_t,uint8_t*,uint16_t len);
+typedef void (*tdmMemFun_t)(uint32_t addr,uint8_t *data,uint16_t len);
 
 struct node_t
 {
