@@ -8,8 +8,8 @@
 
 void printAllSlot();
 
-#define HOUR_SEC      3600UL
-#define DAY_TOTAL_SEC (24UL*HOUR_SEC)
+// #define HOUR_SEC      3600UL
+// #define DAY_TOTAL_SEC (24UL*HOUR_SEC)
 
 
 // uint32_t _todaySec;
@@ -109,7 +109,11 @@ void tdmUpdateSlot(uint32_t unixSec)
 
 struct node_t *tdmGetCurrentNode()
 {
-  return &tdm.node[_currentSlot];
+  if(_tdmIsSync)
+  {
+    return &tdm.node[_currentSlot];
+  }
+  return NULL;
 }
 
 struct tdmMeta_t *tdmGetMetaData()
