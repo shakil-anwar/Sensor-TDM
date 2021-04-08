@@ -179,9 +179,10 @@ void printSlot(struct node_t *node)
 
 void printAllSlot()
 {
-  SerialPrintF(P("Max Node Number: "));
+  uint8_t i;
+  SerialPrintF("Max Node Number: ");
   SerialPrintlnU8(tdm.meta.maxNode);
-  for ( uint8_t i= 0; i < tdm.meta.maxNode; i++)
+  for ( i = 0; i < tdm.meta.maxNode; i++)
   {
     SerialPrintlnU8(i);
     printSlot(&tdm.node[i]);
