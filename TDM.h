@@ -14,6 +14,8 @@ extern "C" {
     #endif
 #elif defined(ARDUINO_ARCH_SAM)
     #include <Arduino.h>
+#elif defined(__MSP430G2553__) || defined(__MSP430FR2433__)
+    #include "mspDriver.h"
 #else
     #error "TDM did not find chip architecture "
 #endif
