@@ -64,7 +64,7 @@ bool tdmConfirmSlot(uint8_t slotNo);
 struct node_t *tdmGetCurrentNode();
 struct tdmMeta_t *tdmGetMetaData();
 
-void printSlot(struct node_t *node);
+void printSlot(struct node_t *node, uint8_t slotNo);
 
 #ifdef __cplusplus
 }
