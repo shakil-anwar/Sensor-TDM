@@ -54,7 +54,7 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
 
 void tdmReset()
 {
-  SerialPrintlnF(P("Resetting TDM Slot Data"));
+  SerialPrintlnF(P("Resetting TDM"));
   memset(&tdm.node, 0, sizeof(tdm.node));
   tdm.meta.freeSlotId = 0;
   _nodeWrite(_baseAddr, (uint8_t*)&tdm, sizeof(struct tdm_t));
@@ -63,11 +63,13 @@ void tdmReset()
 
 bool tdmSync(uint32_t unixSec)
 {
-  uint32_t todaySec = unixSec % DAY_TOTAL_SEC;                //calculate today remaining second
-  SerialPrintF(P("todaySec : ")); SerialPrintlnU32(todaySec);
-  _MomentSec = todaySec % tdm.meta.momentDuration;       //Calculate current moment second
-  _prevMomentSec = _MomentSec;
-  _currentSlot = _MomentSec / tdm.meta.perNodeInterval;  //calculate current slot no
+  // uint32_t todaySec = unixSec % DAY_TOTAL_SEC;                //calculate today remaining second
+  // SerialPrintF(P("todaySec : ")); SerialPrintlnU32(todaySec);
+  // _MomentSec = todaySec % tdm.meta.momentDuration;       //Calculate current moment second
+  _MomentSec = unixSec % tdm.meta.momentDuration;
+  // SerialPrintF(P("_MomentSec : ")); SerialPrintlnU16(_MomentSec);
+  // _prevMomentSec = _MomentSec;
+  // _currentSlot = _MomentSec / tdm.meta.perNodeInterval;  //calculate current slot no
   return (_MomentSec % tdm.meta.perNodeInterval == 0);   //starting of new slot returns true
 }
 
@@ -101,6 +103,9 @@ void tdmUpdateSlot(uint32_t unixSec)
     SerialPrintF(P("------------------>Sync :")); SerialPrintlnU8((uint8_t)sync);
     if (sync)
     {
+      //After sync Calculation
+      _prevMomentSec = _MomentSec;
+      _currentSlot = _MomentSec / tdm.meta.perNodeInterval;
       // _currentNode = &tdm.node[_currentSlot];
       SerialPrintF(P("_MomentSec : ")); SerialPrintlnU16(_MomentSec);
       printSlot(&tdm.node[_currentSlot],_currentSlot);
