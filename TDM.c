@@ -55,7 +55,8 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
 void tdmReset()
 {
   SerialPrintlnF(P("Resetting TDM Slot Data"));
-  memset(&tdm, 0, sizeof(struct tdm_t));
+  memset(&tdm.node, 0, sizeof(tdm.node));
+  tdm.meta.freeSlotId = 0;
   _nodeWrite(_baseAddr, (uint8_t*)&tdm, sizeof(struct tdm_t));
   //  _nodeRead(_baseAddr, (uint8_t*)&tdm, sizeof(tdm_t));
 }
