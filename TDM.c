@@ -23,8 +23,8 @@ void printTdmMeta();
 
 struct node_t *tdmNode;
 struct tdmMeta_t *tdmMeta;
-
 uint16_t _tdmLen;
+
 bool _tdmIsSync = false;
 
 uint16_t _MomentSec;
@@ -42,20 +42,18 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
   _baseAddr = baseAddr;
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
-  //
   // allocate dynamic ram for tdm data
-  uint16_t _tdmLen = (maxNode)*sizeof(struct node_t) + sizeof(struct tdmMeta_t) + 1;
+  _tdmLen = (maxNode)*sizeof(struct node_t) + sizeof(struct tdmMeta_t) + 1;
   SerialPrintF(P("TDM Ram size: ")); SerialPrintlnU16(_tdmLen);
 
   void *ptr = malloc(_tdmLen);
   tdmNode = (struct node_t*)ptr;
-  tdmMeta = (struct tdmMeta_t*) (tdmNode + (maxNode)*sizeof(struct node_t));
+  tdmMeta = (struct tdmMeta_t*) (tdmNode + maxNode*sizeof(struct node_t));
   if(ptr != NULL)
   {
     SerialPrintlnF(P("TDM Memory Allocated"));
   }
-   //  read slot from eeprom into ram
-  SerialPrintlnF(P("Loading Saved Slot"));
+  //  read slot from eeprom into ram;
   _nodeRead(_baseAddr, (uint8_t*)tdmNode, _tdmLen);
   printAllSlot();
 
@@ -63,18 +61,15 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
   tdmMeta->momentDuration = momentDuration;
   tdmMeta->reserveSlot = reserveSlot;
   tdmMeta->perNodeInterval = (momentDuration/maxNode);
-
-  SerialPrintF(P("Sensor Max Node: "));
-  SerialPrintlnU8(tdmMeta->maxNode);
-  printTdmMeta(tdmMeta);
 }
 
 void tdmReset()
 {
   SerialPrintlnF(P("Resetting TDM"));
-  memset(tdmNode, 0, sizeof(tdmMeta->maxNode*sizeof(struct node_t)));
+  memset(tdmNode, 0, sizeof(tdmNode[tdmMeta->maxNode]));
+  // memset(tdmNode, 0, _tdmLen);
   tdmMeta -> freeSlotId = 0;
-  _nodeWrite(_baseAddr, (uint8_t*)tdmNode, sizeof(_tdmLen));
+  _nodeWrite(_baseAddr, (uint8_t*)tdmNode, _tdmLen);
 }
 
 bool tdmSync(uint32_t unixSec)
