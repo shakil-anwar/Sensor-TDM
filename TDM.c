@@ -56,7 +56,7 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
   }
    //  read slot from eeprom into ram
   SerialPrintlnF(P("Loading Saved Slot"));
-  _nodeRead(_baseAddr, (uint8_t*)tdmNode, sizeof(_tdmLen));
+  _nodeRead(_baseAddr, (uint8_t*)tdmNode, _tdmLen);
   printAllSlot();
 
   tdmMeta->maxNode = maxNode;
