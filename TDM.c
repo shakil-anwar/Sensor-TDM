@@ -65,9 +65,9 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
 
 void tdmReset()
 {
-  SerialPrintlnF(P("Resetting TDM"));
-  memset(tdmNode, 0, sizeof(tdmNode[tdmMeta->maxNode]));
-  // memset(tdmNode, 0, _tdmLen);
+  SerialPrintF(P("Resetting TDM : "));
+  SerialPrintlnU16( _tdmLen - sizeof(struct tdmMeta_t)-1);
+  memset(tdmNode, 0, _tdmLen - sizeof(struct tdmMeta_t)-1);
   tdmMeta -> freeSlotId = 0;
   _nodeWrite(_baseAddr, (uint8_t*)tdmNode, _tdmLen);
 }
