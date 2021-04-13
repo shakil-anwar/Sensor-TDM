@@ -201,8 +201,9 @@ void printSlot(struct node_t *node, uint8_t slotNo)
 void printAllSlot()
 {
   printTdmMeta(tdmMeta);
+  uint8_t maxNode = tdmMeta->maxNode;
   uint8_t i;
-  for ( i = 0; i < tdmMeta->maxNode; i++)
+  for ( i = 0; i < maxNode; i++)
   {
     SerialPrintlnU8(i);
     printSlot(&tdmNode[i],i);
@@ -211,7 +212,6 @@ void printAllSlot()
 
 void printTdmMeta(struct tdmMeta_t *meta)
 {
-
   SerialPrintF(P("maxNode:")); SerialPrintU8(meta -> maxNode);
   SerialPrintF(P(" | momentDuration:")); SerialPrintU16(meta -> momentDuration);
   SerialPrintF(P(" | perNodeInterval:")); SerialPrintU8(meta -> perNodeInterval);
