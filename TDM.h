@@ -20,6 +20,10 @@ extern "C" {
     #error "TDM did not find chip architecture "
 #endif
 
+#include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+
 #define HOUR_SEC      3600UL
 #define DAY_TOTAL_SEC (24UL*HOUR_SEC)
 
@@ -47,12 +51,12 @@ struct tdmMeta_t
   uint16_t momentDuration;
 };
 
-struct tdm_t
-{
-  struct node_t node[MAX_SENSOR_NODE];
-  struct tdmMeta_t meta;
-  uint8_t checksum;
-};
+// struct tdm_t
+// {
+//   struct node_t node[MAX_SENSOR_NODE];
+//   struct tdmMeta_t meta;
+//   uint8_t checksum;
+// };
 
 
 

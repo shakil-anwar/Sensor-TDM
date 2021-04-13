@@ -18,7 +18,13 @@ void printTdmMeta();
 // struct node_t *_currentNode;
 
 
-struct tdm_t tdm;
+// struct tdm_t tdm;
+// struct tdm_t *tdm;
+
+struct node_t *tdmNode;
+struct tdmMeta_t *tdmMeta;
+
+uint16_t _tdmLen;
 bool _tdmIsSync = false;
 
 uint16_t _MomentSec;
@@ -36,41 +42,45 @@ void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
   _baseAddr = baseAddr;
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
+  //
+  // allocate dynamic ram for tdm data
+  uint16_t _tdmLen = (maxNode)*sizeof(struct node_t) + sizeof(struct tdmMeta_t) + 1;
+  SerialPrintF(P("TDM Ram size: ")); SerialPrintlnU16(_tdmLen);
 
+  void *ptr = malloc(_tdmLen);
+  tdmNode = (struct node_t*)ptr;
+  tdmMeta = (struct tdmMeta_t*) (tdmNode + (maxNode)*sizeof(struct node_t));
+  if(ptr != NULL)
+  {
+    SerialPrintlnF(P("TDM Memory Allocated"));
+  }
    //  read slot from eeprom into ram
   SerialPrintlnF(P("Loading Saved Slot"));
-  _nodeRead(_baseAddr, (uint8_t*)&tdm, sizeof(struct tdm_t));
+  _nodeRead(_baseAddr, (uint8_t*)tdmNode, sizeof(_tdmLen));
   printAllSlot();
 
-  tdm.meta.maxNode = maxNode;
-  tdm.meta.momentDuration = momentDuration;
-  tdm.meta.reserveSlot = reserveSlot;
-  tdm.meta.perNodeInterval = (momentDuration/maxNode);
+  tdmMeta->maxNode = maxNode;
+  tdmMeta->momentDuration = momentDuration;
+  tdmMeta->reserveSlot = reserveSlot;
+  tdmMeta->perNodeInterval = (momentDuration/maxNode);
 
   SerialPrintF(P("Sensor Max Node: "));
-  SerialPrintlnU8(tdm.meta.maxNode);
-  printTdmMeta(&tdm.meta);
+  SerialPrintlnU8(tdmMeta->maxNode);
+  printTdmMeta(tdmMeta);
 }
 
 void tdmReset()
 {
   SerialPrintlnF(P("Resetting TDM"));
-  memset(&tdm.node, 0, sizeof(tdm.node));
-  tdm.meta.freeSlotId = 0;
-  _nodeWrite(_baseAddr, (uint8_t*)&tdm, sizeof(struct tdm_t));
-  //  _nodeRead(_baseAddr, (uint8_t*)&tdm, sizeof(tdm_t));
+  memset(tdmNode, 0, sizeof(tdmMeta->maxNode*sizeof(struct node_t)));
+  tdmMeta -> freeSlotId = 0;
+  _nodeWrite(_baseAddr, (uint8_t*)tdmNode, sizeof(_tdmLen));
 }
 
 bool tdmSync(uint32_t unixSec)
 {
-  // uint32_t todaySec = unixSec % DAY_TOTAL_SEC;                //calculate today remaining second
-  // SerialPrintF(P("todaySec : ")); SerialPrintlnU32(todaySec);
-  // _MomentSec = todaySec % tdm.meta.momentDuration;       //Calculate current moment second
-  _MomentSec = unixSec % tdm.meta.momentDuration;
-  // SerialPrintF(P("_MomentSec : ")); SerialPrintlnU16(_MomentSec);
-  // _prevMomentSec = _MomentSec;
-  // _currentSlot = _MomentSec / tdm.meta.perNodeInterval;  //calculate current slot no
-  return (_MomentSec % tdm.meta.perNodeInterval == 0);   //starting of new slot returns true
+  _MomentSec = unixSec % tdmMeta->momentDuration;
+  return (_MomentSec % tdmMeta->perNodeInterval == 0);   //starting of new slot returns true
 }
 
 void tdmUpdateSlot(uint32_t unixSec)
@@ -78,10 +88,10 @@ void tdmUpdateSlot(uint32_t unixSec)
   if (_tdmIsSync)
   {
     _MomentSec++;
-    if (_MomentSec - _prevMomentSec >= tdm.meta.perNodeInterval)
+    if (_MomentSec - _prevMomentSec >= tdmMeta->perNodeInterval)
     {
       _currentSlot++;
-      if (_currentSlot > tdm.meta.maxNode - 1)
+      if (_currentSlot > tdmMeta->maxNode - 1)
       {
         SerialPrintlnF(P("Max Node Exceeded----------------->"));
         //Start a new momenet and update time
@@ -91,7 +101,7 @@ void tdmUpdateSlot(uint32_t unixSec)
       }
       // _currentNode = &tdm.node[_currentSlot];
       
-      printSlot(&tdm.node[_currentSlot],_currentSlot);
+      printSlot(&tdmNode[_currentSlot],_currentSlot);
       
       // printMomentVar();
       _prevMomentSec = _MomentSec;
@@ -103,14 +113,15 @@ void tdmUpdateSlot(uint32_t unixSec)
     SerialPrintF(P("------------------>Sync :")); SerialPrintlnU8((uint8_t)sync);
     if (sync)
     {
+      
       //After sync Calculation
-      _prevMomentSec = _MomentSec;
-      _currentSlot = _MomentSec / tdm.meta.perNodeInterval;
-      // _currentNode = &tdm.node[_currentSlot];
-      SerialPrintF(P("_MomentSec : ")); SerialPrintlnU16(_MomentSec);
-      printSlot(&tdm.node[_currentSlot],_currentSlot);
-      // printMomentVar();
       _tdmIsSync = true;
+      _prevMomentSec = _MomentSec;
+      _currentSlot = _MomentSec / tdmMeta->perNodeInterval;
+
+      SerialPrintF(P("_MomentSec : ")); SerialPrintlnU16(_MomentSec);
+      printSlot(&tdmNode[_currentSlot],_currentSlot);
+      
     }
   }
 
@@ -120,26 +131,26 @@ struct node_t *tdmGetCurrentNode()
 {
   if(_tdmIsSync)
   {
-    return &tdm.node[_currentSlot];
+    return &tdmNode[_currentSlot];
   }
   return NULL;
 }
 
 struct tdmMeta_t *tdmGetMetaData()
 {
-  return &tdm.meta;
+  return tdmMeta;
 }
 
 uint8_t tdmGetFreeSlot(uint16_t deviceId)
 {
-  uint8_t slotAvail = tdm.meta.freeSlotId;
+  uint8_t slotAvail = tdmMeta->freeSlotId;
   SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);
-  if (slotAvail < tdm.meta.maxNode)
+  if (slotAvail < tdmMeta->maxNode)
   {
     //fill up node info
-    tdm.node[slotAvail].deviceId = deviceId;
-    tdm.node[slotAvail].slotNo = slotAvail;
-    printSlot(&tdm.node[slotAvail],slotAvail);
+    tdmNode[slotAvail].deviceId = deviceId;
+    tdmNode[slotAvail].slotNo = slotAvail;
+    printSlot(&tdmNode[slotAvail],slotAvail);
 
     return slotAvail;
   }
@@ -148,14 +159,14 @@ uint8_t tdmGetFreeSlot(uint16_t deviceId)
 
 bool tdmConfirmSlot(uint8_t slotNo)
 {
-  if (slotNo == tdm.meta.freeSlotId)
+  if (slotNo == tdmMeta->freeSlotId)
   {
     SerialPrintF(P("Confirming Slot : ")); SerialPrintlnU8(slotNo);
-    tdm.node[slotNo].isAllotted = 1; // slot allocation ok
+    tdmNode[slotNo].isAllotted = 1; // slot allocation ok
 
     uint32_t memAddr = _baseAddr + slotNo * sizeof(struct node_t);
     SerialPrintF(P("node addr : ")); SerialPrintlnU8(memAddr);
-    _nodeWrite(memAddr, (uint8_t*)&tdm.node[slotNo], sizeof(struct node_t));
+    _nodeWrite(memAddr, (uint8_t*)&tdmNode[slotNo], sizeof(struct node_t));
 
     //read saved data
     struct node_t nodeBuf;
@@ -163,16 +174,16 @@ bool tdmConfirmSlot(uint8_t slotNo)
     printSlot(&nodeBuf,slotNo);
 
     //update metadata
-    tdm.meta.freeSlotId++;
-    memAddr = _baseAddr + sizeof(tdm.node);
-    _nodeWrite(memAddr, (uint8_t*)&tdm.meta, sizeof(struct tdmMeta_t));
+    tdmMeta->freeSlotId++;
+    memAddr = _baseAddr + tdmMeta->maxNode*sizeof(struct node_t);
+    _nodeWrite(memAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
 
   }
   else
   {
 
     SerialPrintF(P("slotNo :")); SerialPrintU8(slotNo); SerialPrintlnF(P("Slot not confirmed"));
-    SerialPrintF(P("tdm.meta.freeSlotId :")); SerialPrintlnU8(tdm.meta.freeSlotId);
+    SerialPrintF(P("tdm.meta.freeSlotId :")); SerialPrintlnU8(tdmMeta->freeSlotId);
   }
 }
 
@@ -189,13 +200,12 @@ void printSlot(struct node_t *node, uint8_t slotNo)
 
 void printAllSlot()
 {
+  printTdmMeta(tdmMeta);
   uint8_t i;
-  SerialPrintF("Max Node Number: ");
-  SerialPrintlnU8(tdm.meta.maxNode);
-  for ( i = 0; i < tdm.meta.maxNode; i++)
+  for ( i = 0; i < tdmMeta->maxNode; i++)
   {
     SerialPrintlnU8(i);
-    printSlot(&tdm.node[i],i);
+    printSlot(&tdmNode[i],i);
   }
 }
 
