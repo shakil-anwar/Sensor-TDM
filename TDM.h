@@ -60,12 +60,17 @@ struct tdmMeta_t
 
 
 
-void tdmBegin(uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
-              uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
+// void tdmBegin(uint8_t *buf,uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
+//               uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
+
+void tdmInit(uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
+void tdmAttachMem(uint8_t *buf,uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite);
+
+void tdmBegin(uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
 void tdmReset();
 
 void tdmUpdateSlot(uint32_t unixSec);
-uint8_t tdmGetFreeSlot(uint16_t deviceId);
+uint8_t tdmGetFreeSlot(uint16_t sensorId);
 bool tdmConfirmSlot(uint8_t slotNo);
 struct node_t *tdmGetCurrentNode();
 struct tdmMeta_t *tdmGetMetaData();
