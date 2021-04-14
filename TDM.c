@@ -1,6 +1,6 @@
 #include "TDM.h"
 
-void printAllSlot();
+
 void printTdmMeta();
 
 
@@ -16,7 +16,6 @@ uint8_t _currentSlot;
 uint32_t _baseAddr;
 tdmMemFun_t _nodeRead;
 tdmMemFun_t _nodeWrite;
-
 
 
 void tdmAttachMem(uint8_t *buf,uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite)
@@ -42,7 +41,7 @@ void tdmInit(uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot)
   uint16_t _tdmLen = ((uint8_t*)&tdmNode[tdmMeta->maxNode] - (uint8_t*)tdmNode) + sizeof(struct tdmMeta_t) + 1;
   _nodeRead(_baseAddr, (uint8_t*)tdmNode, _tdmLen);
   SerialPrintF(P("TDM Buf Size: ")); SerialPrintlnU16(_tdmLen);
-  printAllSlot();
+  tdmPrintSlotDetails();
 }
 
 void tdmBegin(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
@@ -90,7 +89,7 @@ void tdmUpdateSlot(uint32_t unixSec)
       }
       // _currentNode = &tdm.node[_currentSlot];
       
-      printSlot(&tdmNode[_currentSlot],_currentSlot);
+      tdmPrintSlot(&tdmNode[_currentSlot],_currentSlot);
       
       // printMomentVar();
       _prevMomentSec = _MomentSec;
@@ -109,7 +108,7 @@ void tdmUpdateSlot(uint32_t unixSec)
       _currentSlot = _MomentSec / tdmMeta->perNodeInterval;
 
       SerialPrintF(P("_MomentSec : ")); SerialPrintlnU16(_MomentSec);
-      printSlot(&tdmNode[_currentSlot],_currentSlot);
+      tdmPrintSlot(&tdmNode[_currentSlot],_currentSlot);
       
     }
   }
@@ -139,7 +138,7 @@ uint8_t tdmGetFreeSlot(uint16_t sensorId)
     //fill up node info
     tdmNode[slotAvail].deviceId = sensorId;
     tdmNode[slotAvail].slotNo = slotAvail;
-    printSlot(&tdmNode[slotAvail],slotAvail);
+    tdmPrintSlot(&tdmNode[slotAvail],slotAvail);
 
     return slotAvail;
   }
@@ -165,7 +164,7 @@ bool tdmConfirmSlot(uint8_t slotNo)
     //read saved data
     struct node_t nodeBuf;
     _nodeRead(memAddr, (uint8_t*)&nodeBuf, sizeof(struct node_t));
-    printSlot(&nodeBuf,slotNo);
+    tdmPrintSlot(&nodeBuf,slotNo);
 
     //update metadata
     tdmMeta->freeSlotId++;
@@ -184,7 +183,7 @@ bool tdmConfirmSlot(uint8_t slotNo)
 
 
 
-void printSlot(struct node_t *node, uint8_t slotNo)
+void tdmPrintSlot(struct node_t *node, uint8_t slotNo)
 {
   SerialPrintF(P("slot #:")); SerialPrintU8(slotNo);
   SerialPrintF(P(" |slotId:")); SerialPrintU8(node -> slotNo);
@@ -193,7 +192,7 @@ void printSlot(struct node_t *node, uint8_t slotNo)
   SerialPrintF(P(" | losSlot:")); SerialPrintlnU8(node -> losSlot);
 }
 
-void printAllSlot()
+void tdmPrintSlotDetails()
 {
   printTdmMeta(tdmMeta);
   uint8_t maxNode = tdmMeta->maxNode;
@@ -201,7 +200,7 @@ void printAllSlot()
   for ( i = 0; i < maxNode; i++)
   {
     SerialPrintlnU8(i);
-    printSlot(&tdmNode[i],i);
+    tdmPrintSlot(&tdmNode[i],i);
   }
 }
 

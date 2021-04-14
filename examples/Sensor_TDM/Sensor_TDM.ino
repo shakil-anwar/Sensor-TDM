@@ -3,22 +3,30 @@
 #include <EEPROM.h>
 
 #define EEPROM_ADDR   0
-//void tdmSaveNode(uint32_t addr, struct node_t *node);
-//void tdmReadNode(uint32_t addr, struct node_t *node);
+#define MAX_NODE      10
+#define MOMENT_SEC    60
+#define RESERVE_NODE  2
+#define TDM_BUF_SZ    (MAX_NODE*4+6+1)
 void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len);
 void eepromRead(uint32_t addr, uint8_t *buf, uint16_t len);
-uint32_t nowUnix =0;
+uint32_t nowUnix = 0;
 
 volatile uint32_t _second = nowUnix;
-//slot_t slotData;
+
 uint8_t slotId;
+uint8_t tdmBuf[TDM_BUF_SZ];
+
 void setup()
 {
-  Serial.begin(9600);
-  SerialBegin(9600); //supporting serial c library
+  Serial.begin(250000);
+  SerialBegin(250000); //supporting serial c library
   Serial.println(F("Setup Done"));
-  tdmBegin(EEPROM_ADDR, eepromRead, eepromUpdate, 600, 100,20);
-//  tdmReset();
+
+  //  tdmAttachMem(tdmBuf, EEPROM_ADDR, eepromRead, eepromUpdate);
+  //  tdmInit(MOMENT_SEC, MAX_NODE, RESERVE_NODE);
+  tdmBegin(tdmBuf, EEPROM_ADDR, eepromRead, eepromUpdate, MOMENT_SEC,
+           MAX_NODE, RESERVE_NODE);
+  //  tdmReset();
 
   timer1.initialize(1);
   timer1.attachIntCompB(timerIsr);
