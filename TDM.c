@@ -142,7 +142,7 @@ uint8_t tdmGetFreeSlot(uint16_t deviceId)
 {
   uint8_t slotAvail = tdmMeta->freeSlotId;
   SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);
-  if (slotAvail < tdmMeta->maxNode)
+  if (slotAvail < tdmMeta->maxNode - tdmMeta->reserveSlot)
   {
     //fill up node info
     tdmNode[slotAvail].deviceId = deviceId;
@@ -150,6 +150,10 @@ uint8_t tdmGetFreeSlot(uint16_t deviceId)
     printSlot(&tdmNode[slotAvail],slotAvail);
 
     return slotAvail;
+  }
+  else
+  {
+    SerialPrintF(P("No slot"));
   }
   return 255; //invalid slot
 }
