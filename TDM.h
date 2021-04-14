@@ -66,7 +66,8 @@ struct tdmMeta_t
 void tdmInit(uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
 void tdmAttachMem(uint8_t *buf,uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite);
 
-void tdmBegin(uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
+void tdmBegin(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
+              uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
 void tdmReset();
 
 void tdmUpdateSlot(uint32_t unixSec);
