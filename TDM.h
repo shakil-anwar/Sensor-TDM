@@ -20,9 +20,9 @@ extern "C" {
     #error "TDM did not find chip architecture "
 #endif
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
+// #include <stdint.h>
+// #include <stdbool.h>
+// #include <stddef.h>
 
 #define HOUR_SEC      3600UL
 #define DAY_TOTAL_SEC (24UL*HOUR_SEC)
@@ -63,7 +63,7 @@ struct tdmMeta_t
 // void tdmBegin(uint8_t *buf,uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
 //               uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
 
-void tdmInit(uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot);
+void tdmInit(uint16_t durationMoment, uint8_t nodeMax, uint8_t slotReserve);
 void tdmAttachMem(uint8_t *buf,uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite);
 
 void tdmBegin(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,

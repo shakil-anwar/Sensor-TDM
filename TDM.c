@@ -18,30 +18,38 @@ tdmMemFun_t _nodeRead;
 tdmMemFun_t _nodeWrite;
 
 
-void tdmAttachMem(uint8_t *buf,uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite)
+void tdmAttachMem(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite)
 {
   _baseAddr = baseAddr;
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
   tdmNode = (struct node_t*)buf;
+  SerialPrintF(P("Test0: "));
+  SerialPrintlnU16((uint16_t)tdmNode);
+  SerialPrintlnU16((uint16_t)&tdmNode[0]);
 }
 
-void tdmInit(uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot)
+void tdmInit(uint16_t durationMoment, uint8_t nodeMax, uint8_t slotReserve)
 {
-  tdmMeta = (struct tdmMeta_t*) &tdmNode[maxNode];
-  tdmMeta->maxNode = maxNode;
-  tdmMeta->momentDuration = momentDuration;
-  tdmMeta->reserveSlot = reserveSlot;
-  tdmMeta->perNodeInterval = (momentDuration/maxNode);
+  tdmMeta = (struct tdmMeta_t*) &tdmNode[nodeMax];
 
+  // SerialPrintF(P("Max Node : ")); SerialPrintlnU8(tdmMeta->maxNode);
+  // SerialPrintF(P("momentDuration: ")); SerialPrintlnU8(tdmMeta->momentDuration);
+
+  // SerialPrintF(P("tdmNode[tdmMeta->maxNode]"));
   // SerialPrintlnU16((uint16_t)tdmMeta);
-  // SerialPrintlnU16((uint16_t)&tdmNode[maxNode]);
 
-   //Load Slot info from eeprom
-  uint16_t _tdmLen = ((uint8_t*)&tdmNode[tdmMeta->maxNode] - (uint8_t*)tdmNode) + sizeof(struct tdmMeta_t) + 1;
+  uint16_t _tdmLen = ((uint8_t*)tdmMeta - (uint8_t*)tdmNode) + sizeof(struct tdmMeta_t) + 1;
   _nodeRead(_baseAddr, (uint8_t*)tdmNode, _tdmLen);
+
   SerialPrintF(P("TDM Buf Size: ")); SerialPrintlnU16(_tdmLen);
   tdmPrintSlotDetails();
+
+  tdmMeta->maxNode = nodeMax;
+  tdmMeta->momentDuration = durationMoment;
+  tdmMeta->reserveSlot = slotReserve;
+  tdmMeta->perNodeInterval = (durationMoment/nodeMax);
+  
 }
 
 void tdmBegin(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite,
@@ -50,12 +58,22 @@ void tdmBegin(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t
   // buf = malloc(_tdmLen);
   tdmAttachMem(buf,baseAddr,nodeRead, nodeWrite);
   tdmInit(momentDuration,maxNode,reserveSlot);
+  //validate basic value for operation
+  bool tdmOk = (tdmMeta->maxNode>0 ) && (tdmMeta->momentDuration>0 ) && 
+               (tdmMeta->perNodeInterval > 0);
+  SerialPrintF(P("Tdm Begin Status : "));SerialPrintlnU8(tdmOk);
 }
 
 void tdmReset()
 {
-  uint16_t nodeLen = (uint8_t*)&tdmNode[tdmMeta->maxNode] - (uint8_t*)tdmNode;
-  SerialPrintF(P("Resetting TDM : "));
+  // SerialPrintF(P("Resetting TDM : "));
+  // SerialPrintF(P("tdmNode[tdmMeta->maxNode]"));
+  // SerialPrintlnU16((uint16_t)tdmMeta);
+  // SerialPrintlnU16((uint16_t)&tdmNode[tdmMeta->maxNode]);
+
+  int16_t nodeLen = (int16_t)((uint8_t*)tdmMeta - (uint8_t*)tdmNode);
+  
+  
   SerialPrintlnS16(nodeLen);
   
   memset(tdmNode, 0,nodeLen);
@@ -169,7 +187,7 @@ bool tdmConfirmSlot(uint8_t slotNo)
     //update metadata
     tdmMeta->freeSlotId++;
     // memAddr = _baseAddr + tdmMeta->maxNode*sizeof(struct node_t);
-    memAddr = _baseAddr + (uint32_t)((uint8_t*)&tdmNode[tdmMeta->maxNode] - (uint8_t*)tdmNode);
+    memAddr = _baseAddr + (uint32_t)((uint8_t*)tdmMeta - (uint8_t*)tdmNode);
     _nodeWrite(memAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
 
   }
