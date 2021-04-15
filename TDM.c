@@ -2,7 +2,7 @@
 
 
 void printTdmMeta();
-
+uint8_t tdmIsRegistered(uint16_t sensorId);
 
 struct node_t *tdmNode;
 struct tdmMeta_t *tdmMeta;
@@ -72,10 +72,7 @@ void tdmReset()
   // SerialPrintlnU16((uint16_t)&tdmNode[tdmMeta->maxNode]);
 
   int16_t nodeLen = (int16_t)((uint8_t*)tdmMeta - (uint8_t*)tdmNode);
-  
-  
-  SerialPrintlnS16(nodeLen);
-  
+
   memset(tdmNode, 0,nodeLen);
   tdmMeta -> freeSlotId = 0;
 
@@ -147,8 +144,25 @@ struct tdmMeta_t *tdmGetMetaData()
   return tdmMeta;
 }
 
+uint8_t tdmIsRegistered(uint16_t sensorId)
+{
+  uint8_t i;
+  uint8_t maxnode = tdmMeta->maxNode;
+  for(i = 0; i< maxnode; i++)
+  {
+    if(tdmNode[i].deviceId == sensorId)
+    {
+      return tdmNode[i].slotNo;
+    }
+  }
+  return 255; //invalid 
+}
+
 uint8_t tdmGetFreeSlot(uint16_t sensorId)
 {
+  uint8_t regSlot = tdmIsRegistered(sensorId);
+  SerialPrintF(P("prev Reg Slot :")); SerialPrintlnU8(regSlot);
+
   uint8_t slotAvail = tdmMeta->freeSlotId;
   SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);
   if (slotAvail < (tdmMeta->maxNode - tdmMeta->reserveSlot))
@@ -205,7 +219,7 @@ void tdmPrintSlot(struct node_t *node, uint8_t slotNo)
 {
   SerialPrintF(P("slot #:")); SerialPrintU8(slotNo);
   SerialPrintF(P(" |slotId:")); SerialPrintU8(node -> slotNo);
-  SerialPrintF(P(" | deviceId:")); SerialPrintU8(node -> deviceId);
+  SerialPrintF(P(" | deviceId:")); SerialPrintU16(node -> deviceId);
   SerialPrintF(P(" | isAllotted:")); SerialPrintU8(node -> isAllotted);
   SerialPrintF(P(" | losSlot:")); SerialPrintlnU8(node -> losSlot);
 }
