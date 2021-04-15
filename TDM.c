@@ -82,8 +82,9 @@ void tdmReset()
 
 bool tdmSync(uint32_t unixSec)
 {
-  _MomentSec = unixSec % tdmMeta->momentDuration;
-  return (_MomentSec % tdmMeta->perNodeInterval == 0);   //starting of new slot returns true
+  _MomentSec = (uint16_t)(unixSec % (uint32_t)tdmMeta->momentDuration);
+  uint16_t syncRem = _MomentSec % (uint16_t)(tdmMeta->perNodeInterval);
+  return (syncRem == 0);   //starting of new slot returns true
 }
 
 void tdmUpdateSlot(uint32_t unixSec)
