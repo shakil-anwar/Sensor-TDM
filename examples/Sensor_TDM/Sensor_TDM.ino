@@ -2,7 +2,7 @@
 #include "AVR_Timer1.h"
 #include <EEPROM.h>
 
-#define EEPROM_ADDR   0
+#define EEPROM_ADDR   200
 #define MAX_NODE      10
 #define MOMENT_SEC    60
 #define RESERVE_NODE  2
