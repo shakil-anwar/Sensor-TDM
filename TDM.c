@@ -4,23 +4,23 @@
 void printTdmMeta();
 uint8_t tdmIsRegistered(uint16_t sensorId);
 
-struct node_t *tdmNode;
-struct tdmMeta_t *tdmMeta;
+volatile struct node_t *tdmNode;
+volatile struct tdmMeta_t *tdmMeta;
 
-bool _tdmIsSync = false;
+volatile bool _tdmIsSync = false;
 
-uint16_t _MomentSec;
-uint16_t _prevMomentSec;
-uint8_t _currentSlot;
+volatile uint16_t _MomentSec;
+volatile uint16_t _prevMomentSec;
+volatile  uint8_t _currentSlot;
 
-uint32_t _baseAddr;
+volatile uint32_t _romBaseAddr;
 tdmMemFun_t _nodeRead;
 tdmMemFun_t _nodeWrite;
 
 
 void tdmAttachMem(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite)
 {
-  _baseAddr = baseAddr;
+  _romBaseAddr = baseAddr;
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
   tdmNode = (struct node_t*)buf;
@@ -40,7 +40,7 @@ void tdmInit(uint16_t durationMoment, uint8_t nodeMax, uint8_t slotReserve)
   // SerialPrintlnU16((uint16_t)tdmMeta);
 
   uint16_t _tdmLen = ((uint8_t*)tdmMeta - (uint8_t*)tdmNode) + sizeof(struct tdmMeta_t) + 1;
-  _nodeRead(_baseAddr, (uint8_t*)tdmNode, _tdmLen);
+  _nodeRead(_romBaseAddr, (uint8_t*)tdmNode, _tdmLen);
 
   SerialPrintF(P("TDM Buf Size: ")); SerialPrintlnU16(_tdmLen);
   tdmPrintSlotDetails();
@@ -58,6 +58,7 @@ void tdmBegin(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t
   // buf = malloc(_tdmLen);
   tdmAttachMem(buf,baseAddr,nodeRead, nodeWrite);
   tdmInit(momentDuration,maxNode,reserveSlot);
+  SerialPrintF(P("rom base addr : ")); SerialPrintlnU32(_romBaseAddr);
   //validate basic value for operation
   bool tdmOk = (tdmMeta->maxNode>0 ) && (tdmMeta->momentDuration>0 ) && 
                (tdmMeta->perNodeInterval > 0);
@@ -77,7 +78,7 @@ void tdmReset()
   tdmMeta -> freeSlotId = 0;
 
   nodeLen += sizeof(struct tdmMeta_t)+1;
-  _nodeWrite(_baseAddr, (uint8_t*)tdmNode, nodeLen);
+  _nodeWrite(_romBaseAddr, (uint8_t*)tdmNode, nodeLen);
 }
 
 bool tdmSync(uint32_t unixSec)
@@ -165,27 +166,23 @@ uint8_t tdmGetFreeSlot(uint16_t sensorId)
   if(slotAvail !=255)
   {
     SerialPrintF(P("Sensor Already Registered:")); SerialPrintlnU8(slotAvail);
+    return slotAvail;
   }
-  else
-  {
-    slotAvail = tdmMeta->freeSlotId;
-    SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);
-  }
-  
-  // uint8_t slotAvail = tdmMeta->freeSlotId;
-  
+
+  slotAvail = tdmMeta->freeSlotId;
+  SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);
+
   if (slotAvail < (tdmMeta->maxNode - tdmMeta->reserveSlot))
   {
-    //fill up node info
+    //fill up node info for new sensor
     tdmNode[slotAvail].deviceId = sensorId;
     tdmNode[slotAvail].slotNo = slotAvail;
     tdmPrintSlot(&tdmNode[slotAvail],slotAvail);
-
     return slotAvail;
   }
   else
   {
-    SerialPrintF(P("No slot"));
+    SerialPrintF(P("Slot Not Available"));
   }
   return 255; //invalid slot
 }
@@ -194,31 +191,19 @@ bool tdmConfirmSlot(uint8_t slotNo)
 {
   if (slotNo == tdmMeta->freeSlotId)
   {
-    SerialPrintF(P("Confirming Slot : ")); SerialPrintlnU8(slotNo);
+    
     tdmNode[slotNo].isAllotted = 1; // slot allocation ok
-
-    // uint32_t memAddr = _baseAddr + slotNo * sizeof(struct node_t);
-    uint32_t memAddr = _baseAddr + (uint32_t)((uint8_t*)&tdmNode[slotNo] - (uint8_t*)tdmNode);
-    _nodeWrite(memAddr, (uint8_t*)&tdmNode[slotNo], sizeof(struct node_t));
-    //  SerialPrintF(P("node addr : ")); SerialPrintlnU16(memAddr);
-
-    //read saved data
-    struct node_t nodeBuf;
-    _nodeRead(memAddr, (uint8_t*)&nodeBuf, sizeof(struct node_t));
-    tdmPrintSlot(&nodeBuf,slotNo);
-
+    uint32_t currentAddr = _romBaseAddr + (uint32_t)((uint8_t*)&tdmNode[slotNo] - (uint8_t*)tdmNode);
+    _nodeWrite(currentAddr, (uint8_t*)&tdmNode[slotNo], sizeof(struct node_t));
     //update metadata
     tdmMeta->freeSlotId++;
-    // memAddr = _baseAddr + tdmMeta->maxNode*sizeof(struct node_t);
-    memAddr = _baseAddr + (uint32_t)((uint8_t*)tdmMeta - (uint8_t*)tdmNode);
-    _nodeWrite(memAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
-
+    currentAddr = _romBaseAddr + (uint32_t)((uint8_t*)tdmMeta - (uint8_t*)tdmNode);
+    _nodeWrite(currentAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
+    SerialPrintF(P("Confirmed Slot : ")); SerialPrintlnU8(slotNo);
   }
   else
   {
-
-    SerialPrintF(P("slotNo :")); SerialPrintU8(slotNo); SerialPrintlnF(P("Slot not confirmed"));
-    SerialPrintF(P("tdm.meta.freeSlotId :")); SerialPrintlnU8(tdmMeta->freeSlotId);
+    SerialPrintF(P("Slot Registered or Failed"));
   }
 }
 
@@ -253,3 +238,10 @@ void printTdmMeta(struct tdmMeta_t *meta)
   SerialPrintF(P(" | reserveSlot:")); SerialPrintU8(meta -> reserveSlot);
   SerialPrintF(P(" | freeSlotId:")); SerialPrintlnU8(meta -> freeSlotId);
 }
+
+
+    // SerialPrintF(P("node addr from lib : ")); SerialPrintlnU32(_currentAddr);
+  // //read saved data
+    // struct node_t nodeBuf;
+    // _nodeRead(memAddr, (uint8_t*)&nodeBuf, sizeof(struct node_t));
+    // tdmPrintSlot(&nodeBuf,slotNo);
