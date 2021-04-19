@@ -161,11 +161,19 @@ uint8_t tdmIsRegistered(uint16_t sensorId)
 
 uint8_t tdmGetFreeSlot(uint16_t sensorId)
 {
-  uint8_t regSlot = tdmIsRegistered(sensorId);
-  SerialPrintF(P("prev Reg Slot :")); SerialPrintlnU8(regSlot);
-
-  uint8_t slotAvail = tdmMeta->freeSlotId;
-  SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);
+  uint8_t slotAvail = tdmIsRegistered(sensorId);
+  if(slotAvail !=255)
+  {
+    SerialPrintF(P("Sensor Already Registered:")); SerialPrintlnU8(slotAvail);
+  }
+  else
+  {
+    slotAvail = tdmMeta->freeSlotId;
+    SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);
+  }
+  
+  // uint8_t slotAvail = tdmMeta->freeSlotId;
+  
   if (slotAvail < (tdmMeta->maxNode - tdmMeta->reserveSlot))
   {
     //fill up node info
