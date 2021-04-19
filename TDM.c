@@ -7,7 +7,7 @@ uint8_t tdmIsRegistered(uint16_t sensorId);
 volatile struct node_t *tdmNode;
 volatile struct tdmMeta_t *tdmMeta;
 
-volatile bool _tdmIsSync = false;
+volatile bool _tdmIsSync;
 
 volatile uint16_t _MomentSec;
 volatile uint16_t _prevMomentSec;
@@ -49,6 +49,8 @@ void tdmInit(uint16_t durationMoment, uint8_t nodeMax, uint8_t slotReserve)
   tdmMeta->momentDuration = durationMoment;
   tdmMeta->reserveSlot = slotReserve;
   tdmMeta->perNodeInterval = (durationMoment/nodeMax);
+
+  _tdmIsSync = false;//device not synced initially
   
 }
 
@@ -63,6 +65,7 @@ void tdmBegin(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t
   bool tdmOk = (tdmMeta->maxNode>0 ) && (tdmMeta->momentDuration>0 ) && 
                (tdmMeta->perNodeInterval > 0);
   SerialPrintF(P("Tdm Begin Status : "));SerialPrintlnU8(tdmOk);
+  
 }
 
 void tdmReset()
