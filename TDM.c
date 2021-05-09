@@ -24,9 +24,9 @@ void tdmAttachMem(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemF
   _nodeRead = nodeRead;
   _nodeWrite = nodeWrite;
   tdmNode = (struct node_t*)buf;
-  SerialPrintF(P("Test0: "));
-  SerialPrintlnU16((uint16_t)tdmNode);
-  SerialPrintlnU16((uint16_t)&tdmNode[0]);
+  // SerialPrintF(P("Test0: "));
+  // SerialPrintlnU16((uint16_t)tdmNode);
+  // SerialPrintlnU16((uint16_t)&tdmNode[0]);
 }
 
 void tdmInit(uint16_t durationMoment, uint8_t nodeMax, uint8_t slotReserve)
@@ -42,7 +42,7 @@ void tdmInit(uint16_t durationMoment, uint8_t nodeMax, uint8_t slotReserve)
   uint16_t _tdmLen = ((uint8_t*)tdmMeta - (uint8_t*)tdmNode) + sizeof(struct tdmMeta_t) + 1;
   _nodeRead(_romBaseAddr, (uint8_t*)tdmNode, _tdmLen);
 
-  SerialPrintF(P("TDM Buf Size: ")); SerialPrintlnU16(_tdmLen);
+  // SerialPrintF(P("TDM Buf Size: ")); SerialPrintlnU16(_tdmLen);
   tdmPrintSlotDetails();
 
   tdmMeta->maxNode = nodeMax;
@@ -60,11 +60,11 @@ void tdmBegin(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t
   // buf = malloc(_tdmLen);
   tdmAttachMem(buf,baseAddr,nodeRead, nodeWrite);
   tdmInit(momentDuration,maxNode,reserveSlot);
-  SerialPrintF(P("rom base addr : ")); SerialPrintlnU32(_romBaseAddr);
+  // SerialPrintF(P("rom base addr : ")); SerialPrintlnU32(_romBaseAddr);
   //validate basic value for operation
   bool tdmOk = (tdmMeta->maxNode>0 ) && (tdmMeta->momentDuration>0 ) && 
                (tdmMeta->perNodeInterval > 0);
-  SerialPrintF(P("Tdm Begin Status : "));SerialPrintlnU8(tdmOk);
+  SerialPrintF(P("TDM OK: "));SerialPrintlnU8(tdmOk);
   
 }
 
@@ -101,7 +101,7 @@ void tdmUpdateSlot(uint32_t unixSec)
       _currentSlot++;
       if (_currentSlot > tdmMeta->maxNode - 1)
       {
-        SerialPrintlnF(P("Max Node Exceeded----------------->"));
+        // SerialPrintlnF(P("Max Node Exceeded----------------->"));
         //Start a new momenet and update time
         _MomentSec = 0;
         _currentSlot = 0;
@@ -118,7 +118,7 @@ void tdmUpdateSlot(uint32_t unixSec)
   else
   {
     bool sync = tdmSync(unixSec);
-    SerialPrintF(P("------------------>Sync :")); SerialPrintlnU8((uint8_t)sync);
+    SerialPrintF(P("TDM Sync :")); SerialPrintlnU8((uint8_t)sync);
     if (sync)
     {
       
