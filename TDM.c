@@ -115,13 +115,9 @@ void tdmUpdateSlot(uint32_t unixSec)
         //Start a new momenet and update time
         _MomentSec = 0;
         _currentSlot = 0;
-        //        tdmSync(unixSec);
       }
-      // _currentNode = &tdm.node[_currentSlot];
       
-      tdmPrintSlot(&tdmNode[_currentSlot],_currentSlot);
-      
-      // printMomentVar();
+      //tdmPrintSlot(&tdmNode[_currentSlot],_currentSlot);
       _prevMomentSec = _MomentSec;
     }
   }
@@ -136,15 +132,26 @@ void tdmUpdateSlot(uint32_t unixSec)
       _prevMomentSec = _MomentSec;
       _currentSlot = _MomentSec / tdmMeta->perNodeInterval;
 
-      if(_debug)
-      {
-        SerialPrintF(P("_MomentSec : ")); SerialPrintlnU16(_MomentSec);
-        tdmPrintSlot(&tdmNode[_currentSlot],_currentSlot);
-      }      
+      // if(_debug)
+      // {
+      //   SerialPrintF(P("_MomentSec : ")); SerialPrintlnU16(_MomentSec);
+      //   tdmPrintSlot(&tdmNode[_currentSlot],_currentSlot);
+      // }      
     }
 
     if(_debug){SerialPrintF(P("TDM Sync :")); SerialPrintlnU8((uint8_t)sync);}
 
+  }
+
+}
+
+void tdmPrintCurrentSlot()
+{
+  static uint8_t lastslot;
+  if(_currentSlot != lastslot)
+  {
+    tdmPrintSlot(&tdmNode[_currentSlot],_currentSlot);
+    lastslot = _currentSlot;
   }
 
 }
