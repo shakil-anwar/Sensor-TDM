@@ -235,11 +235,11 @@ bool tdmConfirmSlot(uint8_t slotNo)
 
 void tdmPrintSlot(struct node_t *node, uint8_t slotNo)
 {
-  SerialPrintF(P("slot #:")); SerialPrintU8(slotNo);
-  SerialPrintF(P(" |slotId:")); SerialPrintU8(node -> slotNo);
-  SerialPrintF(P(" | deviceId:")); SerialPrintU16(node -> deviceId);
-  SerialPrintF(P(" | isAllotted:")); SerialPrintU8(node -> isAllotted);
-  SerialPrintF(P(" | losSlot:")); SerialPrintlnU8(node -> losSlot);
+  SerialPrintF(P("TDM->")); SerialPrintU8(slotNo);
+  SerialPrintF(P("|slotId:")); SerialPrintU8(node -> slotNo);
+  SerialPrintF(P("|devId:")); SerialPrintU16(node -> deviceId);
+  SerialPrintF(P("|isAllot:")); SerialPrintU8(node -> isAllotted);
+  SerialPrintF(P("|losSlot:")); SerialPrintlnU8(node -> losSlot);
 }
 
 void tdmPrintSlotDetails()
