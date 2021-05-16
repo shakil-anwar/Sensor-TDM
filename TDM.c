@@ -1,6 +1,16 @@
 #include "TDM.h"
 
 
+struct freeslotLog_t
+{
+	bool isRegtered;
+	bool isAvail;
+	uint8_t slotId;
+	uint8_t reserve;
+};
+
+void tdmPrintSlotReg(struct freeslotLog_t *fslotLog);
+
 void printTdmMeta();
 uint8_t tdmIsRegistered(uint16_t sensorId);
 void tdmPrintSlot(struct node_t *node, uint8_t slotNo);
@@ -184,31 +194,56 @@ uint8_t tdmIsRegistered(uint16_t sensorId)
   return 255; //invalid 
 }
 
+
+void tdmPrintSlotReg(struct freeslotLog_t *fslotLog)
+{
+	SerialPrintF(P("TDM->GETSLOT->isAvail:"));SerialPrintU8(fslotLog->isAvail);
+	SerialPrintF(P("|isOld:"));SerialPrintU8(fslotLog->isRegtered);
+	SerialPrintF(P("|slotId:"));SerialPrintU8(fslotLog->slotId);
+	SerialPrintF(P("|devId:"));SerialPrintlnU16(tdmNode[fslotLog->slotId].deviceId);
+}
+
+
 uint8_t tdmGetFreeSlot(uint16_t sensorId)
 {
   uint8_t slotAvail = tdmIsRegistered(sensorId);
+  struct freeslotLog_t slotLog;
   if(slotAvail !=255)
   {
-    if(_debug){SerialPrintF(P("Sensor Already Registered:")); SerialPrintlnU8(slotAvail);}
-    return slotAvail;
-  }
-
-  slotAvail = tdmMeta->freeSlotId;
-  if(_debug){SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);}
-
-  if (slotAvail < (tdmMeta->maxNode - tdmMeta->reserveSlot))
-  {
-    //fill up node info for new sensor
-    tdmNode[slotAvail].deviceId = sensorId;
-    tdmNode[slotAvail].slotNo = slotAvail;
-    tdmPrintSlot(&tdmNode[slotAvail],slotAvail);
-    return slotAvail;
+  	slotLog.isRegtered = true;
+  	slotLog.isAvail = false;
+    // if(_debug){SerialPrintF(P("Sensor Already Registered:")); SerialPrintlnU8(slotAvail);}
+    // return slotAvail;
   }
   else
   {
-    if(_debug){SerialPrintF(P("Slot Not Available"));}
+  	slotAvail = tdmMeta->freeSlotId;
+	// if(_debug){SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);}
+	if (slotAvail < (tdmMeta->maxNode - tdmMeta->reserveSlot))
+	{
+	    //fill up node info for new sensor
+	    tdmNode[slotAvail].deviceId = sensorId;
+	    tdmNode[slotAvail].slotNo = slotAvail;
+	    // tdmPrintSlot(&tdmNode[slotAvail],slotAvail);
+
+	    slotLog.isRegtered = false;
+  		slotLog.isAvail = true;
+	    // return slotAvail;
+	}
+	else
+	{
+		slotAvail = 255; //invalid slot
+
+		slotLog.isRegtered = false;
+  		slotLog.isAvail = true;
+	    // if(_debug){SerialPrintF(P("Slot Not Available"));}
+	}
   }
-  return 255; //invalid slot
+
+  slotLog.slotId = slotAvail;
+  if(_debug){tdmPrintSlotReg(&slotLog);}
+  return slotAvail;
+  // return 255; //invalid slot
 }
 
 bool tdmConfirmSlot(uint8_t slotNo)
