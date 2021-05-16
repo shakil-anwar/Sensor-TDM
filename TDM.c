@@ -75,7 +75,7 @@ void tdmBegin(uint8_t *buf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t
   bool tdmOk = (tdmMeta->maxNode>0 ) && (tdmMeta->momentDuration>0 ) && 
                (tdmMeta->perNodeInterval > 0);
 
-  if(_debug){SerialPrintF(P("TDM OK: "));SerialPrintlnU8(tdmOk);}
+  if(_debug){SerialPrintF(P("TDM->BEGIN->OK:"));SerialPrintlnU8(tdmOk);}
 }
 
 void tdmReset()
@@ -139,7 +139,7 @@ void tdmUpdateSlot(uint32_t unixSec)
       // }      
     }
 
-    if(_debug){SerialPrintF(P("TDM Sync :")); SerialPrintlnU8((uint8_t)sync);}
+    if(_debug){SerialPrintF(P("TDM->SYNC:")); SerialPrintlnU8((uint8_t)sync);}
 
   }
 
