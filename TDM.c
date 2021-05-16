@@ -248,6 +248,7 @@ uint8_t tdmGetFreeSlot(uint16_t sensorId)
 
 bool tdmConfirmSlot(uint8_t slotNo)
 {
+  bool isSlotConfirmed = false;
   if (slotNo == tdmMeta->freeSlotId)
   {
     
@@ -258,12 +259,24 @@ bool tdmConfirmSlot(uint8_t slotNo)
     tdmMeta->freeSlotId++;
     currentAddr = _romBaseAddr + (uint32_t)((uint8_t*)tdmMeta - (uint8_t*)tdmNode);
     _nodeWrite(currentAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
-    if(_debug){SerialPrintF(P("Confirmed Slot : ")); SerialPrintlnU8(slotNo);}
+    isSlotConfirmed = true;
+    // if(_debug){SerialPrintF(P("Confirmed Slot : ")); SerialPrintlnU8(slotNo);}
   }
-  else
+  // else
+  // {
+
+  // }
+  // else
+  // {
+  //   if(_debug){SerialPrintF(P("Slot Registered or Failed"));}
+  // }
+
+  if(_debug)
   {
-    if(_debug){SerialPrintF(P("Slot Registered or Failed"));}
+  	SerialPrintF(P("TDM->CNFRM_SLOT->isRegDone:")); SerialPrintlnU8(isSlotConfirmed);
   }
+
+  return isSlotConfirmed;
 }
 
 
