@@ -249,18 +249,18 @@ void tdmPrintSlotDetails()
   uint8_t i;
   for ( i = 0; i < maxNode; i++)
   {
-    SerialPrintlnU8(i);
+    // SerialPrintlnU8(i);
     tdmPrintSlot(&tdmNode[i],i);
   }
 }
 
 void printTdmMeta(struct tdmMeta_t *meta)
 {
-  SerialPrintF(P("maxNode:")); SerialPrintU8(meta -> maxNode);
-  SerialPrintF(P(" | momentDuration:")); SerialPrintU16(meta -> momentDuration);
-  SerialPrintF(P(" | perNodeInterval:")); SerialPrintU8(meta -> perNodeInterval);
-  SerialPrintF(P(" | reserveSlot:")); SerialPrintU8(meta -> reserveSlot);
-  SerialPrintF(P(" | freeSlotId:")); SerialPrintlnU8(meta -> freeSlotId);
+  SerialPrintF(P("TDM->META->Node:")); SerialPrintU8(meta -> maxNode);
+  SerialPrintF(P("|Dur:")); SerialPrintU16(meta -> momentDuration);
+  SerialPrintF(P("|Int:")); SerialPrintU8(meta -> perNodeInterval);
+  SerialPrintF(P("|rsrvSlt:")); SerialPrintU8(meta -> reserveSlot);
+  SerialPrintF(P("|freeSlot:")); SerialPrintlnU8(meta -> freeSlotId);
 }
 
 
