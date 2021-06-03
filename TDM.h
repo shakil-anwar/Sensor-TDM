@@ -33,22 +33,13 @@ extern "C" {
 
 typedef void (*tdmMemFun_t)(uint32_t addr,uint8_t *data,uint16_t len);
 
-struct tdmHeader_t 
-{
-  uint8_t deviceType;
-  uint8_t checksum;
-  uint16_t deviceId;
-};
-
 struct node_t
 {
+  uint16_t deviceId;
   uint8_t slotNo;
   uint8_t isAllotted:1;
   uint8_t losSlot:4;
   uint8_t reserve:3;
-  tdmHeader_t header;
-  uint32_t createTime;
-  uint32_t deployTime;
 };
 
 struct tdmMeta_t
@@ -59,8 +50,6 @@ struct tdmMeta_t
   uint8_t perNodeInterval;
   uint16_t momentDuration;
 };
-
-struct 
 
 // struct tdm_t
 // {
