@@ -78,6 +78,8 @@ struct tdmMeta_t *tdmGetMetaData();
 
 void tdmDebug(bool debug);
 void tdmPrintCurrentSlot();
+uint8_t tdmIsRegistered(uint16_t sensorId);
+uint8_t tdmIsRegistered2(uint16_t sensorId, uint8_t slotID);
 
 #ifdef __cplusplus
 }

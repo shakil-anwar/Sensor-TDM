@@ -15,7 +15,7 @@ struct freeslotLog_t
 void tdmPrintSlotReg(struct freeslotLog_t *fslotLog);
 
 void printTdmMeta();
-uint8_t tdmIsRegistered(uint16_t sensorId);
+
 void tdmPrintSlot(struct node_t *node, uint8_t slotNo);
 void tdmPrintSlotDetails();
 
@@ -210,7 +210,19 @@ uint8_t tdmIsRegistered(uint16_t sensorId)
   return 255; //invalid 
 }
 
-//print slot registration information. 
+uint8_t tdmIsRegistered2(uint16_t sensorId, uint8_t slotID)
+{
+
+  if(tdmNode[slotID].deviceId == sensorId)
+  {
+    return slotID;
+  }else
+  {
+    return 255;
+  }
+}
+
+
 void tdmPrintSlotReg(struct freeslotLog_t *fslotLog)
 {
 	SerialPrintF(P("TDM->GETSLOT->isAvail:"));SerialPrintU8(fslotLog->isAvail);
@@ -235,25 +247,25 @@ uint8_t tdmGetFreeSlot(uint16_t sensorId)
   {
   	slotAvail = tdmMeta->freeSlotId;
 	// if(_debug){SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);}
-	if (slotAvail < (tdmMeta->maxNode - tdmMeta->reserveSlot))
-	{
-	    //fill up node info for new sensor
-	    tdmNode[slotAvail].deviceId = sensorId;
-	    tdmNode[slotAvail].slotNo = slotAvail;
-	    // tdmPrintSlot(&tdmNode[slotAvail],slotAvail);
+  	if (slotAvail < (tdmMeta->maxNode - tdmMeta->reserveSlot))
+  	{
+  	    //fill up node info for new sensor
+  	    tdmNode[slotAvail].deviceId = sensorId;
+  	    tdmNode[slotAvail].slotNo = slotAvail;
+  	    // tdmPrintSlot(&tdmNode[slotAvail],slotAvail);
 
-	    slotLog.isRegtered = false;
-  		slotLog.isAvail = true;
-	    // return slotAvail;
-	}
-	else
-	{
-		slotAvail = 255; //invalid slot
+  	    slotLog.isRegtered = false;
+    		slotLog.isAvail = true;
+  	    // return slotAvail;
+  	}
+  	else
+  	{
+  		  slotAvail = 255; //invalid slot
 
-		slotLog.isRegtered = false;
-  		slotLog.isAvail = true;
-	    // if(_debug){SerialPrintF(P("Slot Not Available"));}
-	}
+  		  slotLog.isRegtered = false;
+    		slotLog.isAvail = true;
+  	    // if(_debug){SerialPrintF(P("Slot Not Available"));}
+  	}
   }
 
   slotLog.slotId = slotAvail;
