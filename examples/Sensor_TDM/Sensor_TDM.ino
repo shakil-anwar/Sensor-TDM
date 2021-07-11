@@ -2,31 +2,47 @@
 #include "AVR_Timer1.h"
 #include <EEPROM.h>
 
-#define EEPROM_ADDR   200
-#define MAX_NODE      10
+#define SPI_SPEED 1000000UL
+#define TDM_EEPROM_ADDR    200
+#define MAX_NODE      20
+#define TRAY_MAX_NODE 5
 #define MOMENT_SEC    60
 #define RESERVE_NODE  2
-#define TDM_BUF_SZ    (MAX_NODE*4+6+1)
-void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len);
-void eepromRead(uint32_t addr, uint8_t *buf, uint16_t len);
+#define TDM_BUF_SZ    (TRAY_MAX_NODE*4+1)
+#define TDM_DATA_SAVE_ADDR      0 
+
+
+#define FLASH1_CS     5
+#define FLASH1_HOLD   7
+
+
+
+volatile uint8_t tdmBuf[TDM_BUF_SZ];
+volatile uint8_t tdmMetaBuf[6];
+
 uint32_t nowUnix = 0;
 
 volatile uint32_t _second = nowUnix;
 
 uint8_t slotId;
-uint8_t tdmBuf[TDM_BUF_SZ];
+
+
+Flash flash(FLASH1_CS, FLASH1_HOLD);
 
 void setup()
 {
-  Serial.begin(250000);
-  SerialBegin(250000); //supporting serial c library
+  Serial.begin(115200);
+  SerialBegin(0); //supporting serial c library
   Serial.println(F("Setup Done"));
 
-  //  tdmAttachMem(tdmBuf, EEPROM_ADDR, eepromRead, eepromUpdate);
-  //  tdmInit(MOMENT_SEC, MAX_NODE, RESERVE_NODE);
-  tdmBegin(tdmBuf, EEPROM_ADDR, eepromRead, eepromUpdate, MOMENT_SEC,
-           MAX_NODE, RESERVE_NODE);
-  //  tdmReset();
+  gpioBegin();
+
+
+ tdmDebug(true);
+ tdmBegin((uint8_t *)tdmBuf,(uint8_t *)tdmMetaBuf, TDM_DATA_SAVE_ADDR, nodeReader, nodeWriter,nodeEraser,
+          TDM_EEPROM_ADDR, eepromRead,eepromUpdate,
+           MOMENT_SEC, MAX_NODE, RESERVE_NODE, TRAY_MAX_NODE);
+
 
   timer1.initialize(1);
   timer1.attachIntCompB(timerIsr);
@@ -43,18 +59,29 @@ void loop()
     int id = getSerialCmd();
     Serial.println(id);
 
-    slotId = tdmGetFreeSlot(id);
+    slotId = tdmGetFreeSlot2(id);
   }
   else if (cmd == 2)
   {
-    tdmConfirmSlot(slotId);
+    tdmConfirmSlot2(slotId);
+  }
+
+  else if (cmd == 3)
+  {
+    tdmPrintSlotDetails();
+  }
+
+  else if (cmd == 0)
+  {
+    tdmReset();
+    flash.eraseSector(0);
   }
 }
 
 void timerIsr(void)
 {
   _second++;
-  Serial.print(F("Sec : ")); Serial.println(_second);
+  Serial.println(_second); //Serial.println(F("*************"));
   tdmUpdateSlot(_second);
 }
 
@@ -70,59 +97,55 @@ int getSerialCmd()
   return cmd;
 }
 
-void tdmSaveNode(uint32_t addr, struct node_t *node)
+void nodeReader(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-  uint16_t eepAddr = (uint16_t)addr;
-  uint8_t *ptr = (uint8_t*)node;
-  //  Serial.print(F("TDM EEPROM Saving Addr : ")); Serial.println(eepAddr);
-  //  Serial.println(sizeof(struct node_t));
-  for (uint8_t i = 0; i < sizeof(struct node_t); i++)
-  {
-    EEPROM.update(eepAddr + i, *(ptr + i));
-    //    Serial.print(*(ptr + i));Serial.print(F("  "));
-  }
-  //  Serial.println();
-
+  flash.read(addr, buf, len);
+//  Serial.print(F("<====Tail :"));
+//  Serial.print(addr);
+//  Serial.println(F("====>"));
+  
 }
 
-void tdmReadNode(uint32_t addr, struct node_t *node)
+void nodeWriter(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-  uint16_t eepAddr = (uint16_t)addr;
-  uint8_t *ptr = (uint8_t*)node;
-  //  Serial.print(F("TDM EEPROM Reading Addr : ")); Serial.println(eepAddr);
-  //  Serial.println(sizeof(struct node_t));
-  for (uint8_t i = 0 ; i < sizeof(struct node_t); i++)
-  {
-    *(ptr + i) = EEPROM.read(eepAddr + i);
-    //    Serial.print(*(ptr + i));Serial.print(F("  "));
-  }
-  //  Serial.println();
+  flash.write(addr, buf,len);
+//  Serial.print(F("<====Head :"));
+//  Serial.print(addr);
+//  Serial.println(F("====>"));
 }
-
+void nodeEraser(uint32_t addr)
+{
+  flash.eraseSector(addr);
+}
 void eepromRead(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-
   uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = buf;
-  Serial.print(F("EEPROM Reading Addr : ")); Serial.println(eepAddr);
+//  Serial.print(F("EEPROM Read Addr: ")); Serial.println(eepAddr);
   for (uint16_t i = 0 ; i < len; i++)
   {
     *(ptr + i) = EEPROM.read(eepAddr + i);
-    Serial.print( *(ptr + i)); Serial.print(F("  "));
+//    Serial.print( *(ptr + i)); Serial.print(F("  "));
   }
-  Serial.println();
+//  Serial.println();
 }
 
 void eepromUpdate(uint32_t addr, uint8_t *buf, uint16_t len)
 {
-
   uint16_t eepAddr = (uint16_t)addr;
   uint8_t *ptr = buf;
-  Serial.print(F("EEPROM Update Addr : ")); Serial.println(eepAddr);
+//  Serial.print(F("EEPROM Update Addr: ")); Serial.println(eepAddr);
   for (uint16_t i = 0; i < len; i++)
   {
     EEPROM.update(eepAddr + i, *(ptr + i));
-    Serial.print( *(ptr + i)); Serial.print(F("  "));
+//    Serial.print( *(ptr + i)); Serial.print(F("  "));
   }
-  Serial.println();
+//  Serial.println();
+}
+
+void gpioBegin()
+{
+  pinMode(FLASH1_CS,OUTPUT);
+  digitalWrite(FLASH1_CS,HIGH);
+  flash.begin(SPI_SPEED);
 }
