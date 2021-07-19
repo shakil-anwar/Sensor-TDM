@@ -35,9 +35,12 @@ struct node_t
 {
   uint16_t deviceId;
   uint8_t slotNo;
-  uint8_t isAllotted:2;
-  uint8_t losSlot:4;
-  uint8_t reserve:2;
+  uint8_t isAllotted;
+  uint8_t losSlot;
+  uint8_t reserve;
+  uint32_t regTime;
+  uint32_t deployTime;
+  uint16_t nodeChecksum;
 };
 
 struct tdmMeta_t
@@ -47,7 +50,9 @@ struct tdmMeta_t
   uint8_t perNodeInterval;
   uint8_t maxTrayNode;
   uint8_t reserveSlot;
+  uint8_t reserve;
   uint16_t momentDuration;
+  uint16_t metaChecksum;
 };
 
 
@@ -60,7 +65,7 @@ void tdmAttachMem(uint8_t *buf, uint8_t *metaBuf, uint32_t baseAddr, tdmMemFun_t
                             uint32_t metaBaseAddr, tdmMemFun_t metaRead, tdmMemFun_t metaWrite);
 
 
-void tdmBegin(uint8_t *buf, uint8_t *metaBuf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite, tdmMemErase_t nodeErase,
+bool tdmBegin(uint8_t *buf, uint8_t *metaBuf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite, tdmMemErase_t nodeErase,
                         uint32_t metaBaseAddr, tdmMemFun_t metaRead, tdmMemFun_t metaWrite,
                             uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot, uint8_t trayMaxNode);
 void tdmReset();

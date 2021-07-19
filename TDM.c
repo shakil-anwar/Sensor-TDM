@@ -14,17 +14,21 @@ struct freeslotLog_t
 
 void tdmPrintSlotReg(struct freeslotLog_t *fslotLog);
 
+void tdmRegNodeRead(uint8_t slotno);
+void tdmRegNodeWrite(uint8_t slotno);
+
 void printTdmMeta();
 
 void tdmPrintSlot(struct node_t *node, uint8_t slotNo);
 void tdmPrintSlotDetails();
+uint16_t calcTdmChecksum(void *buffer, uint8_t len);
 
 static bool _debug = true;
 volatile struct node_t *tdmTray;
 volatile struct tdmMeta_t *tdmMeta;
 
-volatile struct node_t tdmTempNodeData;
-volatile struct node_t *tdmRegTempNode = &tdmTempNodeData;
+struct node_t tdmTempNodeData;
+struct node_t *tdmRegTempNode = &tdmTempNodeData;
 
 
 volatile bool _tdmIsSync;
@@ -71,15 +75,31 @@ void tdmAttachMem(uint8_t *buf, uint8_t *metaBuf, uint32_t baseAddr, tdmMemFun_t
 void tdmInit(uint16_t durationMoment, uint8_t maxNode, uint8_t slotReserve, uint8_t trayMaxNode)
 {
     _metaRead(_metaBaseAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
+    uint16_t tdmCsk = tdmMeta ->metaChecksum;
+    tdmMeta ->metaChecksum = 0;
+    uint16_t calcTdmcsk = calcTdmChecksum((void*)tdmMeta, sizeof(struct tdmMeta_t));
+
+    bool metaOk = (tdmMeta->maxNode == maxNode) &&
+                  (tdmMeta->reserveSlot < tdmMeta->maxNode) &&
+                  (tdmMeta->maxTrayNode < tdmMeta->maxNode) &&
+                  (calcTdmcsk == tdmCsk);
+    
+
+    if(metaOk == false)
+    {
+      SerialPrintlnF(P("TDM->: Checksum mismatch"));
+      tdmMeta->maxNode = maxNode;
+      tdmMeta->momentDuration = durationMoment;
+      tdmMeta->reserveSlot = slotReserve;
+      tdmMeta->perNodeInterval = (durationMoment/maxNode);
+      tdmMeta->maxTrayNode = trayMaxNode;
+      tdmMeta ->metaChecksum = 0;
+      tdmMeta ->metaChecksum = calcTdmChecksum((void*)tdmMeta, sizeof(struct tdmMeta_t));
+      _metaWrite(_metaBaseAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
+      SerialPrintlnF(P("TDM->: TDM Meta Updated"));
+    }
 
   if(_debug){tdmPrintSlotDetails();}
-
-  tdmMeta->maxNode = maxNode;
-  tdmMeta->momentDuration = durationMoment;
-  tdmMeta->reserveSlot = slotReserve;
-  tdmMeta->perNodeInterval = (durationMoment/maxNode);
-  tdmMeta->maxTrayNode = trayMaxNode;
-  _metaWrite(_metaBaseAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
 
   _tdmIsSync = false;//device not synced initially
   
@@ -88,7 +108,7 @@ void tdmInit(uint16_t durationMoment, uint8_t maxNode, uint8_t slotReserve, uint
 }
 
 //tdm final begin function for user firmware api. 
-void tdmBegin(uint8_t *buf,uint8_t *metaBuf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite, tdmMemErase_t nodeErase,
+bool tdmBegin(uint8_t *buf,uint8_t *metaBuf, uint32_t baseAddr, tdmMemFun_t nodeRead, tdmMemFun_t nodeWrite, tdmMemErase_t nodeErase,
                         uint32_t metaBaseAddr, tdmMemFun_t metaRead, tdmMemFun_t metaWrite,
                             uint16_t momentDuration, uint8_t maxNode, uint8_t reserveSlot, uint8_t trayMaxNode)
 {
@@ -96,7 +116,7 @@ void tdmBegin(uint8_t *buf,uint8_t *metaBuf, uint32_t baseAddr, tdmMemFun_t node
   tdmInit(momentDuration,maxNode,reserveSlot,trayMaxNode);
   // SerialPrintF(P("rom base addr : ")); SerialPrintlnU32(_romBaseAddr);
   //validate basic value for operation
-  bool tdmOk = (tdmMeta->maxNode>0 ) && (tdmMeta->momentDuration>0 ) && 
+  bool tdmOk = (tdmMeta->maxNode > 0 ) && (tdmMeta->momentDuration>0 ) && 
                (tdmMeta->perNodeInterval > 0);
 
   if(_debug){SerialPrintF(P("TDM->BEGIN->OK:"));SerialPrintlnU8(tdmOk);}
@@ -109,6 +129,16 @@ void tdmReset()
   tdmMeta -> freeSlotId = 0;
   _metaWrite(_metaBaseAddr,(uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
   _nodeErase(_romBaseAddr);
+
+  uint8_t slotno;
+  uint8_t maxnode = tdmMeta->maxNode;
+
+  for(slotno = 0; slotno< maxnode; slotno++)
+  {
+    tdmRegNodeRead(slotno);
+    tdmRegTempNode->slotNo = slotno;
+    tdmRegNodeWrite(slotno);
+  }  
 }
 
 
@@ -131,9 +161,9 @@ void tdmUpdateSlot(uint32_t unixSec)
     if (_MomentSec - _prevMomentSec >= tdmMeta->perNodeInterval)
     {
       _currentSlot++;
-      _currentTraySlotNo =_currentSlot % tdmMeta->maxTrayNode;
+      _currentTraySlotNo++;
       
-      if (_currentSlot > tdmMeta->maxNode - 1)
+      if (_currentSlot >= tdmMeta->maxNode)
       {
         // SerialPrintlnF(P("Max Node Exceeded----------------->"));
         //Start a new momenet and update time
@@ -141,10 +171,12 @@ void tdmUpdateSlot(uint32_t unixSec)
         _currentSlot = 0;
         _currentTrayNo = 0;
         _currentTraySlotNo = 0;
+        tdmTrayUpdate(_currentTrayNo);
       }
 
-      if(_currentTraySlotNo == 0)
-      {        
+      if(_currentTraySlotNo >= tdmMeta -> maxTrayNode)
+      {    
+        _currentTraySlotNo = 0;    
         if(_currentSlot != 0)
         {  
           _currentTrayNo++;
@@ -152,11 +184,11 @@ void tdmUpdateSlot(uint32_t unixSec)
         tdmTrayUpdate(_currentTrayNo);
         // tdmTrayPrint(_currentTrayNo);
       }
-      SerialPrintF(P("Slot: ")); SerialPrintU8(_currentSlot);
-      SerialPrintF(P(" |TrayNo: ")); SerialPrintU8(_currentTrayNo);
-      SerialPrintF(P(" |TraySlot: ")); SerialPrintlnU8(_currentTraySlotNo);
+      // SerialPrintF(P("Slot: ")); SerialPrintU8(_currentSlot);
+      // SerialPrintF(P(" |TrayNo: ")); SerialPrintU8(_currentTrayNo);
+      // SerialPrintF(P(" |TraySlot: ")); SerialPrintlnU8(_currentTraySlotNo);
       maxCheckPerNode(&tdmTray[_currentTraySlotNo],_currentSlot);
-      tdmPrintSlot(&tdmTray[_currentTraySlotNo],_currentSlot);       
+      // tdmPrintSlot(&tdmTray[_currentTraySlotNo],_currentSlot);       
       _prevMomentSec = _MomentSec;
     }
   }
@@ -233,7 +265,7 @@ uint8_t tdmIsRegistered(uint16_t sensorId)
 uint8_t tdmIsRegistered2(uint16_t sensorId, uint8_t slotID)
 {
 
- tdmRegNodeRead( sensorId, slotID );
+ tdmRegNodeRead( slotID );
   if(tdmRegTempNode->deviceId == sensorId)
   {
     return slotID;
@@ -267,13 +299,14 @@ uint8_t tdmGetFreeSlot(uint16_t sensorId)
   else
   {
   	slotAvail = tdmMeta->freeSlotId;
+    tdmRegNodeRead(slotAvail);
 	// if(_debug){SerialPrintF(P("slot Avail :")); SerialPrintlnU8(slotAvail);}
   	if (slotAvail < (tdmMeta->maxNode - tdmMeta->reserveSlot))
   	{
   	    //fill up node info for new sensor
   	    tdmRegTempNode->deviceId = sensorId;
         tdmRegTempNode->slotNo = slotAvail;
-        tdmRegTempNode->losSlot = 0; // did it just for print
+        tdmRegTempNode->losSlot = 0xFF; // did it just for print
         tdmPrintSlot(tdmRegTempNode,slotAvail);
 
   	    slotLog.isRegtered = false;
@@ -302,6 +335,7 @@ bool tdmConfirmSlot(uint8_t slotNo)
   bool isSlotConfirmed = false;
   if (slotNo == tdmMeta->freeSlotId)
   {   
+    
     tdmRegTempNode->isAllotted = 1; // slot allocation ok
     tdmRegNodeWrite(slotNo);
     //update metadata
@@ -334,12 +368,19 @@ void tdmPrintSlot(struct node_t *node, uint8_t slotNo)
 void tdmPrintSlotDetails()
 {
   printTdmMeta(tdmMeta);
-  uint8_t maxTrayNo = tdmMeta->maxNode / tdmMeta->maxTrayNode;
+  // uint8_t maxTrayNo = tdmMeta->maxNode / tdmMeta->maxTrayNode;
+  // uint8_t i;
+  // for ( i = 0; i < maxTrayNo; i++)
+  // {
+  //   tdmTrayUpdate(i);
+  //   tdmTrayPrint(i);
+  // }
+  uint8_t maxNode = tdmMeta->maxNode;
   uint8_t i;
-  for ( i = 0; i < maxTrayNo; i++)
+  for ( i = 0; i < maxNode; i++)
   {
-    tdmTrayUpdate(i);
-    tdmTrayPrint(i);
+    tdmRegNodeRead(i);
+    tdmPrintSlot(tdmRegTempNode,i);
   }
 }
 
@@ -356,19 +397,31 @@ void printTdmMeta(struct tdmMeta_t *meta)
 
 void maxCheckPerNode(struct node_t *node, uint8_t slotNo)
 {
-  if((node -> slotNo == 0xFF) && (node -> deviceId == 0xFFFF))
+  if(node -> slotNo == 0xFF)
   {
     node -> slotNo=0;
-    node -> deviceId=0;
+  }
+
+  if(node -> deviceId == 0xFFFF)
+  {
+    node -> deviceId = 0;
+  }
+
+  if(node -> isAllotted == 0xFF)
+  {
     node -> isAllotted=0;
+  }
+  
+  if(node -> losSlot == 0xFF)
+  {
     node -> losSlot=0;
-  }  
+  }
 }
 
 void tdmTrayUpdate(uint8_t trayno)
 {
   uint32_t currentAddr = _romBaseAddr + (uint32_t) (trayno * tdmMeta->maxTrayNode  * sizeof(struct node_t));
-  SerialPrintF(P("TrayNo: ")); SerialPrintU8( trayno); SerialPrintlnF(P(" is updated"));
+  // SerialPrintF(P("TrayNo: ")); SerialPrintU8( trayno); SerialPrintlnF(P(" is updated"));
   // SerialPrintF(P("baseAddr: ")); SerialPrintlnU32( _romBaseAddr);
   // SerialPrintF(P("CurrAddr: ")); SerialPrintlnU32(currentAddr);
   _nodeRead(currentAddr, (uint8_t*)tdmTray,tdmMeta->maxTrayNode*sizeof(struct node_t));
@@ -388,6 +441,7 @@ void tdmTrayPrint(uint8_t trayno)
   // SerialPrintlnF(P("---------"));
 }
 
+
 void tdmRegNodeRead(uint8_t slotno)
 {
   uint32_t currentAddr = _romBaseAddr + (uint32_t) (slotno * sizeof(struct node_t));
@@ -402,4 +456,18 @@ void tdmRegNodeWrite(uint8_t slotno)
   // SerialPrintF(P("slotNo : ")); SerialPrintlnU32(slotno);
   // SerialPrintF(P("currentAddr : ")); SerialPrintlnU32(currentAddr);
   _nodeWrite(currentAddr, (uint8_t*)tdmRegTempNode, sizeof(struct node_t));
+}
+
+
+uint16_t calcTdmChecksum(void *buffer, uint8_t len)
+{
+  uint8_t *p = (uint8_t*)buffer;
+  
+  uint16_t sum = 0;
+  uint8_t i;
+  for(i = 0; i< len; i++)
+  {
+    sum += (uint16_t)p[i];
+  }
+  return sum;
 }
