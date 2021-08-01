@@ -94,6 +94,7 @@ void tdmInit(uint16_t durationMoment, uint8_t maxNode, uint8_t slotReserve, uint
       tdmMeta->perNodeInterval = (durationMoment/maxNode);
       tdmMeta->maxTrayNode = trayMaxNode;
       tdmMeta ->metaChecksum = 0;
+      tdmMeta ->freeSlotId =0;
       tdmMeta ->metaChecksum = calcTdmChecksum((void*)tdmMeta, sizeof(struct tdmMeta_t));
       _metaWrite(_metaBaseAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
       SerialPrintlnF(P("TDM->: TDM Meta Updated"));
@@ -337,6 +338,8 @@ bool tdmConfirmSlot(uint8_t slotNo)
   {   
     
     tdmRegTempNode->isAllotted = 1; // slot allocation ok
+    tdmRegTempNode->nodeChecksum = 0;
+    tdmRegTempNode->nodeChecksum = calcTdmChecksum((void*)tdmRegTempNode, sizeof(struct node_t));
     tdmRegNodeWrite(slotNo);
     //update metadata
     tdmMeta->freeSlotId++;
