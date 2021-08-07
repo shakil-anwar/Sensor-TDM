@@ -82,6 +82,8 @@ void tdmPrintCurrentSlot();
 uint8_t tdmIsRegistered(uint16_t sensorId);
 uint8_t tdmIsRegistered2(uint16_t sensorId, uint8_t slotID);
 void tdmPrintSlotDetails();
+
+bool isTdmSynced();
 #ifdef __cplusplus
 }
 #endif

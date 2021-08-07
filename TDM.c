@@ -474,3 +474,8 @@ uint16_t calcTdmChecksum(void *buffer, uint8_t len)
   }
   return sum;
 }
+
+bool isTdmSynced()
+{
+  return _tdmIsSync;
+}
