@@ -94,11 +94,28 @@ void tdmInit(uint16_t durationMoment, uint8_t maxNode, uint8_t slotReserve, uint
       tdmMeta->perNodeInterval = (durationMoment/maxNode);
       tdmMeta->maxTrayNode = trayMaxNode;
       tdmMeta ->metaChecksum = 0;
-      tdmMeta ->freeSlotId =0;
+
+
+      uint8_t i;
+      uint8_t maxnode = tdmMeta->maxNode;
+
+      for(i = 0; i< maxnode; i++)
+      {
+        tdmRegNodeRead(i);
+        if(tdmRegTempNode->isAllotted == 255)
+        {
+          break;
+        }
+      }
+      tdmMeta ->freeSlotId = i;
+      // tdmMeta ->freeSlotId =0;
       tdmMeta ->metaChecksum = calcTdmChecksum((void*)tdmMeta, sizeof(struct tdmMeta_t));
       _metaWrite(_metaBaseAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
       SerialPrintlnF(P("TDM->: TDM Meta Updated"));
     }
+
+    
+
 
   if(_debug){tdmPrintSlotDetails();}
 
@@ -343,7 +360,10 @@ bool tdmConfirmSlot(uint8_t slotNo)
     tdmRegNodeWrite(slotNo);
     //update metadata
     tdmMeta->freeSlotId++;
+    tdmMeta ->metaChecksum = 0;
+    tdmMeta ->metaChecksum = calcTdmChecksum((void*)tdmMeta, sizeof(struct tdmMeta_t));
     _metaWrite(_metaBaseAddr, (uint8_t*)tdmMeta, sizeof(struct tdmMeta_t));
+
     isSlotConfirmed = true;
     if(_debug){SerialPrintF(P("Confirmed Slot : ")); SerialPrintlnU8(slotNo);}
   }
